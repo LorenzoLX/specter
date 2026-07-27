@@ -42,6 +42,7 @@ export function wireOmkTrust() {
 
     const osVerInput = dialog.querySelector('#ot-os-version') as HTMLInputElement | null;
     const vbKeyInput = dialog.querySelector('#ot-vb-key') as HTMLInputElement | null;
+    let previousVbKey = '';
 
     try {
       const { stdout: osVer } = await exec(`sh ${scriptPath} --get os_version 2>/dev/null || echo ""`);
@@ -49,7 +50,8 @@ export function wireOmkTrust() {
     } catch {}
     try {
       const { stdout: vbKey } = await exec(`sh ${scriptPath} --get vb_key 2>/dev/null || echo ""`);
-      if (vbKeyInput) vbKeyInput.value = vbKey.trim();
+      previousVbKey = vbKey.trim();
+      if (vbKeyInput) vbKeyInput.value = previousVbKey;
     } catch {}
 
     dialog.querySelector('#ot-cancel')!.addEventListener('click', () => dialog.close());
@@ -70,6 +72,8 @@ export function wireOmkTrust() {
         if (vbKey) args.push(shellEscape(`vb_key=${vbKey}`));
         if (args.length === 0) { dialog.close(); return; }
 
+        const needsReboot = previousVbKey === 'random' && vbKey === 'auto';
+
         const cmd = `sh ${scriptPath} --set ${args.join(' ')}`;
         const result = await exec(cmd);
         if (typeof result.code === 'number' && result.code !== 0) {
@@ -78,6 +82,9 @@ export function wireOmkTrust() {
         }
         await exec(`sh ${shellEscape(moddir + '/refresh_desc.sh')}`);
         showToast(t('omk_saved', 'OMK OS & Boot Key saved'), { icon: 'check_circle', type: 'success', autoCloseDelay: 2500 });
+        if (needsReboot) {
+          showToast(t('omk_vb_reboot_required', 'Device reboot required for random→auto VB key'), { icon: 'info', type: 'info', autoCloseDelay: 5000 });
+        }
         dialog.close();
       } catch {
         showToast(t('omk_save_error', 'Failed to save'), { icon: 'error', type: 'error', autoCloseDelay: 4000 });

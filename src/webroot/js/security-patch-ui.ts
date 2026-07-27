@@ -1,9 +1,18 @@
 import { exec, getModuleDir } from './bridge.js';
 import { getTranslation } from './i18n.js';
 import { showToast, closeToast } from './toast.js';
-import { defaultSecurityPatch } from './constants.js';
-import { shellEscape } from './utils.js';
+import { API_URLS, defaultSecurityPatch } from './constants.js';
+import { fetchJson, shellEscape } from './utils.js';
+import type { KeystoreManagerJson } from './types.js';
 const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
+
+function isOmkPatchValue(val: string): boolean {
+  return val === 'auto' || val === 'latest' || /^\d{4}-\d{2}-\d{2}$/.test(val);
+}
+
+function isDatePatchValue(val: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(val);
+}
 
 export function wireSecurityPatch() {
   const btn = document.getElementById('security-patch-btn');
@@ -17,6 +26,14 @@ export function wireSecurityPatch() {
     const defaultDate = defaultSecurityPatch();
     const scriptPath = shellEscape(moddir + '/features/security_patch.sh');
 
+    let isOmk = false;
+    try {
+      const km = await fetchJson<KeystoreManagerJson>(API_URLS.KEYSTORE_MANAGER!, 0);
+      isOmk = km?.id === 'omk';
+    } catch {
+      isOmk = false;
+    }
+
     let current = '';
     try {
       const { stdout } = await exec(`sh ${scriptPath} --get 2>/dev/null || echo ""`);
@@ -25,11 +42,18 @@ export function wireSecurityPatch() {
       current = '';
     }
 
+    const label = isOmk
+      ? t('sp_dialog_label_omk', 'Security Patch')
+      : t('sp_dialog_label', 'Security Patch Date');
+    const placeholder = isOmk
+      ? t('sp_placeholder_omk', 'auto, latest, or YYYY-MM-DD')
+      : t('sp_placeholder', 'YYYY-MM-DD');
+
     const dialog = document.createElement('md-dialog');
     dialog.innerHTML = `
       <div slot="headline">${t('sp_dialog_title', 'Set Security Patch')}</div>
       <div slot="content" style="min-height:0">
-        <md-outlined-text-field id="sp-input" type="text" label="${t('sp_dialog_label', 'Security Patch Date')}" placeholder="YYYY-MM-DD" data-i18n-placeholder="sp_placeholder" maxlength="10" autocapitalize="none" style="width:100%;--md-outlined-text-field-container-shape:14px;--md-outlined-field-with-trailing-content-trailing-space:24px;overflow:hidden">
+        <md-outlined-text-field id="sp-input" type="text" label="${label}" placeholder="${placeholder}" maxlength="10" autocapitalize="none" ${isOmk ? `helper-text="${t('sp_helper_omk', 'auto, latest, or YYYY-MM-DD')}"` : ''} style="width:100%;--md-outlined-text-field-container-shape:14px;--md-outlined-field-with-trailing-content-trailing-space:24px;overflow:hidden">
           <div slot="trailing-icon" style="display:flex;align-items:center;gap:2px">
             <md-icon-button id="sp-device" style="--md-icon-button-icon-size:18px;width:32px;height:32px" aria-label="${t('sp_device', 'Device')}">
               <md-icon>smartphone</md-icon>
@@ -48,7 +72,13 @@ export function wireSecurityPatch() {
     document.body.appendChild(dialog);
 
     const input = dialog.querySelector('#sp-input') as MdOutlinedTextField | null;
-    if (input) input.value = current || defaultDate;
+    if (input) {
+      if (current && (isOmk ? isOmkPatchValue(current) : isDatePatchValue(current))) {
+        input.value = current;
+      } else {
+        input.value = defaultDate;
+      }
+    }
 
     dialog.querySelector('#sp-device')!.addEventListener('click', async () => {
       const blockClose = (e: Event) => e.preventDefault();
@@ -57,7 +87,7 @@ export function wireSecurityPatch() {
         try {
           const { stdout, code } = await exec(`sh ${scriptPath} --device 2>/dev/null`);
           const date = stdout.trim();
-          if (code === 0 && date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          if (code === 0 && date && isDatePatchValue(date)) {
             input!.value = date;
             showToast(t('sp_device_loaded', 'Loaded device security patch'), { icon: 'check_circle', type: 'success', autoCloseDelay: 2500 });
           } else {
@@ -79,9 +109,10 @@ export function wireSecurityPatch() {
         try {
           const { stdout } = await exec(`sh ${scriptPath} --fetch 2>/dev/null || echo ""`);
           closeToast(fetchingToast);
-          const date = stdout.trim();
-          if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            input!.value = date;
+          const val = stdout.trim();
+          const ok = isOmk ? isOmkPatchValue(val) : isDatePatchValue(val);
+          if (ok) {
+            input!.value = val;
             showToast(t('sp_fetched', 'Latest security patch fetched'), { icon: 'check_circle', type: 'success', autoCloseDelay: 2500 });
           } else {
             showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error', autoCloseDelay: 3000 });
@@ -101,8 +132,14 @@ export function wireSecurityPatch() {
       dialog.addEventListener('cancel', blockClose);
       try {
         const val = input!.value.trim();
-        if (!val || !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
-          showToast(t('sp_invalid_date', 'Invalid date format (use YYYY-MM-DD)'), { icon: 'error', type: 'error', autoCloseDelay: 3000 });
+        const valid = isOmk ? isOmkPatchValue(val) : isDatePatchValue(val);
+        if (!val || !valid) {
+          showToast(
+            isOmk
+              ? t('sp_invalid_omk', 'Use auto, latest, or YYYY-MM-DD')
+              : t('sp_invalid_date', 'Invalid date format (use YYYY-MM-DD)'),
+            { icon: 'error', type: 'error', autoCloseDelay: 3000 },
+          );
           return;
         }
         try {
