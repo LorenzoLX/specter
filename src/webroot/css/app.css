@@ -1593,6 +1593,7 @@ md-filled-tonal-button {
   max-width: 800px;
   margin: 0 auto;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
