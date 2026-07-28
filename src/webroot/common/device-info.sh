@@ -44,36 +44,37 @@ else
   _tee_tier="null"
 fi
 
-# PIF spoofed device, read from PIF config (support both .prop and .json)
 _pif_model=""
-for _pif_path in \
-  "/data/adb/pif.prop" \
-  "$MODULES_BASE/playintegrityfix/custom.pif.prop" \
-  "/data/adb/pif.json" \
-  "$MODULES_BASE/playintegrityfix/pif.json" \
-  "$MODULES_BASE/playintegrityfix/autopif.json" \
-  "$MODULES_BASE/playintegrityfix/custom.pif.json"
-do
-  [ -f "$_pif_path" ] || continue
-  case "$_pif_path" in
-    *.prop)
-      _pif_manu=$(grep '^MANUFACTURER=' "$_pif_path" 2>/dev/null | cut -d= -f2)
-      _pif_modl=$(grep '^MODEL=' "$_pif_path" 2>/dev/null | cut -d= -f2)
-      ;;
-    *.json)
-      _pif_manu=$(grep -o '"MANUFACTURER"[[:space:]]*:[[:space:]]*"[^"]*"' "$_pif_path" 2>/dev/null | sed 's/.*"MANUFACTURER"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-      _pif_modl=$(grep -o '"MODEL"[[:space:]]*:[[:space:]]*"[^"]*"' "$_pif_path" 2>/dev/null | sed 's/.*"MODEL"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-      ;;
-  esac
-  if [ -n "$_pif_manu" ] || [ -n "$_pif_modl" ]; then break; fi
-done
-unset _pif_path
-if [ -n "$_pif_manu" ] && [ -n "$_pif_modl" ]; then
-  _pif_model="${_pif_manu} ${_pif_modl}"
-elif [ -n "$_pif_modl" ]; then
-  _pif_model="$_pif_modl"
+if _pif_prop >/dev/null 2>&1; then
+  for _pif_path in \
+    "/data/adb/pif.prop" \
+    "$PIF_DIR/custom.pif.prop" \
+    "/data/adb/pif.json" \
+    "$PIF_DIR/pif.json" \
+    "$PIF_DIR/autopif.json" \
+    "$PIF_DIR/custom.pif.json"
+  do
+    [ -f "$_pif_path" ] || continue
+    case "$_pif_path" in
+      *.prop)
+        _pif_manu=$(grep '^MANUFACTURER=' "$_pif_path" 2>/dev/null | cut -d= -f2)
+        _pif_modl=$(grep '^MODEL=' "$_pif_path" 2>/dev/null | cut -d= -f2)
+        ;;
+      *.json)
+        _pif_manu=$(grep -o '"MANUFACTURER"[[:space:]]*:[[:space:]]*"[^"]*"' "$_pif_path" 2>/dev/null | sed 's/.*"MANUFACTURER"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        _pif_modl=$(grep -o '"MODEL"[[:space:]]*:[[:space:]]*"[^"]*"' "$_pif_path" 2>/dev/null | sed 's/.*"MODEL"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        ;;
+    esac
+    if [ -n "$_pif_manu" ] || [ -n "$_pif_modl" ]; then break; fi
+  done
+  unset _pif_path
+  if [ -n "$_pif_manu" ] && [ -n "$_pif_modl" ]; then
+    _pif_model="${_pif_manu} ${_pif_modl}"
+  elif [ -n "$_pif_modl" ]; then
+    _pif_model="$_pif_modl"
+  fi
+  unset _pif_manu _pif_modl
 fi
-unset _pif_manu _pif_modl
 
 # Output JSON
 cat <<EOF > "$INFO_PATH"
