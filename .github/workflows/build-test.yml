@@ -93,5 +93,3 @@ jobs:
             echo "Telegram send failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-            exit 1
-          fi
