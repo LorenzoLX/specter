@@ -424,5 +424,10 @@
   "history_desc_tee_done": "TEE 检查完成",
   "history_desc_boot_hash_failed": "启动哈希失败",
   "history_desc_boot_hash": "启动哈希：{source}",
-  "history_desc_boot_hash_set": "启动哈希集"
+  "history_desc_boot_hash_set": "启动哈希集",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
 }

@@ -424,5 +424,10 @@
   "tools_restart_omk_full": "Tam OMK yeniden yükleme",
   "tools_restart_omk_full_desc": "keymint, injector ve tüm daemon'ları yeniden başlatır",
   "tools_restart_omk_full_confirm": "Tam OMK yeniden yükleme, yeniden enjekte etmeden önce injector yoluyla keystore2'ye SIGTERM/SIGKILL gönderir. Devam edilsin mi?",
-  "tools_support_section": "Destek"
+  "tools_support_section": "Destek",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
 }

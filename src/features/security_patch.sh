@@ -38,6 +38,25 @@ _validate_patch_date() {
   esac
 }
 
+_is_intentional_spoofed_patch() {
+  _validate_patch_date "$1" >/dev/null && return 0
+  case "$KSM_FORMAT" in
+    toml)
+      case "$1" in
+        auto|latest) return 0 ;;
+      esac
+      ;;
+  esac
+  return 1
+}
+
+_synthetic_patch_value() {
+  case "$KSM_FORMAT" in
+    toml) printf 'latest' ;;
+    *) _compute_fallback_patch ;;
+  esac
+}
+
 _read_system_build_prop_patch() {
   for _prop_file in ${SPECTER_SYSTEM_BUILD_PROP:-} /system/build.prop /system/system/build.prop; do
     [ -n "$_prop_file" ] || continue
@@ -109,7 +128,7 @@ _resolve_action_patch() {
     fi
   fi
   if [ "$(cfg_get toggle_action_security_patch_synthetic 1)" != "0" ]; then
-    _patch=$(_compute_fallback_patch)
+    _patch=$(_synthetic_patch_value)
     _patch_source="other"
     return 0
   fi
@@ -118,7 +137,7 @@ _resolve_action_patch() {
 
 case "${1:-}" in
   --fetch)
-    _fetch_pixel_patch || _compute_fallback_patch
+    _fetch_pixel_patch || _synthetic_patch_value
     exit 0
     ;;
   --device)
@@ -138,6 +157,9 @@ case "${1:-}" in
   --set)
     case "${2:-}" in
       [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+      auto|latest)
+        [ "$KSM_FORMAT" = "toml" ] || die "security_patch.sh --set requires a YYYY-MM-DD date"
+        ;;
       *) die "security_patch.sh --set requires a YYYY-MM-DD date" ;;
     esac
     ksm_available || die "No keystore manager (Tricky Store / OhMyKeymint) data directory found"
@@ -151,7 +173,7 @@ ksm_available || die "No keystore manager (Tricky Store / OhMyKeymint) data dire
 
 if [ "$SPECTER_FIRST_BOOT" = "1" ]; then
   _existing=$(ksm_get_security_patch 2>/dev/null) || _existing=""
-  if [ -n "$_existing" ] && _validate_patch_date "$_existing" >/dev/null; then
+  if [ -n "$_existing" ] && _is_intentional_spoofed_patch "$_existing"; then
     log_i "SECURITY_PATCH" "First install: existing spoofed patch left unchanged ($_existing)"
     unset _existing
     exit 0
@@ -160,7 +182,7 @@ if [ "$SPECTER_FIRST_BOOT" = "1" ]; then
 fi
 
 if ! _resolve_action_patch; then
-  log_i "SECURITY_PATCH" "No Action patch source produced a date, leaving existing value unchanged"
+  log_i "SECURITY_PATCH" "No Action patch source produced a value, leaving existing value unchanged"
   unset _patch _patch_source
   exit 0
 fi

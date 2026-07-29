@@ -424,5 +424,10 @@
   "history_desc_tee_done": "تم فحص TEE",
   "history_desc_boot_hash_failed": "فشل هاش الإقلاع",
   "history_desc_boot_hash": "هاش الإقلاع: {source}",
-  "history_desc_boot_hash_set": "تم تعيين هاش الإقلاع"
+  "history_desc_boot_hash_set": "تم تعيين هاش الإقلاع",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
 }

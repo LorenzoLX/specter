@@ -424,5 +424,10 @@
   "tools_restart_omk_full": "Redémarrage complet d'OMK",
   "tools_restart_omk_full_desc": "Redémarre le keymint, l'injecteur, et tous les démons connexes d'OMK",
   "tools_restart_omk_full_confirm": "Le redémarrage complet d'OMK va arrêter keystore2 (SIGTERM/SIGKILL) via le chemin de l'injecteur puis relancer l'injection. Confirmer ?",
-  "tools_support_section": "Assistance"
+  "tools_support_section": "Assistance",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
 }

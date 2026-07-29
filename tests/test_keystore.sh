@@ -457,6 +457,114 @@ set_cfg toggle_action_security_patch_synthetic 0
 SPECTER_FIRST_BOOT=1 run_feature security_patch.sh >/dev/null
 assert_contains "security patch first boot unset: vendor applied" "$(cat "$KSM_SECURITY")" "boot=2026-12-05"
 
+# ---------- security_patch.sh first boot: OMK auto left alone ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "auto"
+EOF
+mkdir -p "$TEST_ROOT/system"
+printf 'ro.build.version.security_patch=2026-10-05\n' > "$TEST_ROOT/system/build.prop"
+export SPECTER_SYSTEM_BUILD_PROP="$TEST_ROOT/system/build.prop"
+detect_keystore_manager
+SPECTER_FIRST_BOOT=1 run_feature security_patch.sh >/dev/null
+assert_contains "security patch first boot omk: auto kept" "$(cat "$OMK_CONFIG")" 'security_patch = "auto"'
+assert_not_contains "security patch first boot omk: device not written" "$(cat "$OMK_CONFIG")" "2026-10-05"
+
+# ---------- security_patch.sh first boot: OMK latest left alone ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "latest"
+EOF
+mkdir -p "$TEST_ROOT/system"
+printf 'ro.build.version.security_patch=2026-10-05\n' > "$TEST_ROOT/system/build.prop"
+export SPECTER_SYSTEM_BUILD_PROP="$TEST_ROOT/system/build.prop"
+detect_keystore_manager
+SPECTER_FIRST_BOOT=1 run_feature security_patch.sh >/dev/null
+assert_contains "security patch first boot omk: latest kept" "$(cat "$OMK_CONFIG")" 'security_patch = "latest"'
+assert_not_contains "security patch first boot omk latest: device not written" "$(cat "$OMK_CONFIG")" "2026-10-05"
+
+# ---------- security_patch.sh: OMK synthetic writes latest ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "2026-01-05"
+EOF
+detect_keystore_manager
+unset SPECTER_SYSTEM_BUILD_PROP
+set_cfg toggle_action_security_patch_device 0
+set_cfg toggle_action_security_patch_bulletin 0
+set_cfg toggle_action_security_patch_synthetic 1
+run_feature security_patch.sh >/dev/null
+assert_contains "security patch omk synthetic: latest token" "$(cat "$OMK_CONFIG")" 'security_patch = "latest"'
+
+# ---------- security_patch.sh --set: OMK accepts auto ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "2026-01-05"
+EOF
+detect_keystore_manager
+run_feature security_patch.sh --set auto >/dev/null
+assert_contains "security_patch.sh --set omk auto" "$(cat "$OMK_CONFIG")" 'security_patch = "auto"'
+
+# ---------- security_patch.sh --set: OMK accepts latest ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "2026-01-05"
+EOF
+detect_keystore_manager
+run_feature security_patch.sh --set latest >/dev/null
+assert_contains "security_patch.sh --set omk latest" "$(cat "$OMK_CONFIG")" 'security_patch = "latest"'
+
+# ---------- security_patch.sh --set: Tricky Store rejects auto ----------
+bootstrap
+source_libs
+mk_module tricky_store "Tricky Store"
+detect_keystore_manager
+printf 'system=202601\nboot=2026-01-05\nvendor=2026-01-05\n' > "$KSM_SECURITY"
+_sp_set_rc=0
+run_feature security_patch.sh --set auto >/dev/null 2>&1 || _sp_set_rc=$?
+assert_eq "security_patch.sh --set ts auto rejected" "1" "$_sp_set_rc"
+assert_contains "security_patch.sh --set ts auto unchanged" "$(cat "$KSM_SECURITY")" "boot=2026-01-05"
+
+# ---------- ksm_get/set_security_patch: OMK latest round-trip ----------
+bootstrap
+source_libs
+mk_module oh_my_keymint "OhMyKeymint"
+mkdir -p "$OMK_DIR"
+cat > "$OMK_CONFIG" << 'EOF'
+[trust]
+os_version = 17
+security_patch = "auto"
+EOF
+detect_keystore_manager
+ksm_set_security_patch "latest"
+assert_contains "ksm set omk latest: written" "$(cat "$KSM_SECURITY")" 'security_patch = "latest"'
+assert_eq "ksm get omk latest: round-trip" "latest" "$(ksm_get_security_patch)"
+
 # ---------- ksm_read_targets / ksm_commit_targets: Tricky Store preserves suffixes+comments ----------
 bootstrap
 source_libs

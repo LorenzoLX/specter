@@ -424,5 +424,19 @@
   "tools_restart_omk_full": "Pełne przeładowanie OMK",
   "tools_restart_omk_full_desc": "Restartuje keymint, injector i wszystkie demony",
   "tools_restart_omk_full_confirm": "Pełne przeładowanie OMK zatrzymuje keystore2 (SIGTERM/SIGKILL) przez ścieżkę injectora przed ponowną iniekcją. Kontynuować?",
-  "tools_support_section": "Wsparcie"
+  "tools_support_section": "Wsparcie",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key",
+  "omk_title": "OMK OS & Boot Key",
+  "omk_desc": "Configure OS version and verified boot key reported by OhMyKeymint",
+  "omk_os_version": "OS Version",
+  "omk_os_version_helper": "auto or number (e.g. 15)",
+  "omk_vb_key": "VB Key",
+  "omk_vb_key_helper": "auto, random, or 64 hex chars",
+  "omk_vb_key_invalid": "VB Key must be auto, random, or 64 hex chars",
+  "omk_saved": "OMK OS & Boot Key saved",
+  "omk_save_error": "Failed to save OMK OS & Boot Key"
 }

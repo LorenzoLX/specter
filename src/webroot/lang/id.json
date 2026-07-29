@@ -424,5 +424,10 @@
   "tools_restart_omk_full": "Muat ulang OMK penuh",
   "tools_restart_omk_full_desc": "Mulai ulang keymint, injector, dan semua daemon",
   "tools_restart_omk_full_confirm": "Muat ulang OMK penuh menghentikan keystore2 (SIGTERM/SIGKILL) via jalur injector sebelum injeksi ulang. Lanjutkan?",
-  "tools_support_section": "Dukungan"
+  "tools_support_section": "Dukungan",
+  "sp_dialog_label_omk": "Security Patch",
+  "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
+  "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
+  "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
 }
