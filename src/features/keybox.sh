@@ -94,7 +94,7 @@ else
       _DL_VER=$(echo "$_wk_entry" | sed 's/.*"version":"\([^"]*\)".*/\1/')
       _DL_TEXT=$(echo "$_wk_entry" | sed 's/.*"text":"\([^"]*\)".*/\1/')
       [ -z "$_DL_TEXT" ] && _DL_TEXT="$_DL_VER"
-      log_i "KEYBOX" "Randomly selected: $_DL_SOURCE $_DL_TEXT (entry $_random_index of $_wk_count)"
+      log_i "KEYBOX" "Randomly selected: $_DL_SOURCE $_DL_TEXT (entry $((_random_index + 1)) of $_wk_count)"
     else
       _working_source=$(echo "$_history" | grep -o '"working":{[^}]*"source":"[^"]*"' | sed 's/.*"source":"\([^"]*\)".*/\1/')
       _working_version=$(echo "$_history" | grep -o '"working":{[^}]*"version":"[^"]*"' | sed 's/.*"version":"\([^"]*\)".*/\1/')
