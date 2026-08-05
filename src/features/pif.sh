@@ -31,6 +31,9 @@ case "$_NAME" in
     [ -n "$_pif_model" ] && log_i "PIF" "Selected Device: $_pif_model"
     unset _pif_out _pif_model
     ;;
+  *Hybrid*)
+    log_i "PIF" "Hybrid manages fingerprints itself, skipping"
+    ;;
   *)
     log_e "PIF" "Unknown module '$_NAME', can't update"
     log_w "PIF" "Use Play Integrity Fix [INJECT] or Play Integrity Fork"
