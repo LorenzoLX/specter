@@ -54,31 +54,33 @@ if [ -f "$KEYBOX_FILE" ]; then
         log_d "KEYBOX_INFO" "Catalog response length: ${#_history_json}"
         _provider=$(cat "$CONFIG_DIR/val/keybox_provider.val" 2>/dev/null || echo "auto")
         if [ "$_provider" = "auto" ]; then
-          _provider=$(echo "$_history_json" | grep -o '"working":{[^}]*"source":"[^"]*"' | sed 's/.*"source":"\([^"]*\)".*/\1/')
+          _provider=$(echo "$_history_json" | grep -o '"working":{[^}]*"source":"[^"]*"' | sed 's/.*"source":"\([^"]*\)".*/\1/' || true)
         fi
 
         for _s in "$_serial" "$_serial_dec"; do
           [ -z "$_s" ] && continue
           if [ -n "$_provider" ]; then
-            _entry=$(echo "$_history_json" | grep -o '{[^}]*"source":"'"$_provider"'"[^}]*"serial":"'"$_s"'"[^}]*}')
+            _entry=$(echo "$_history_json" | grep -o '{[^}]*"source":"'"$_provider"'"[^}]*"serial":"'"$_s"'"[^}]*}' || true)
           fi
-          [ -z "$_entry" ] && _entry=$(echo "$_history_json" | grep -o '{[^}]*"serial":"'"$_s"'"[^}]*}')
+          if [ -z "$_entry" ]; then
+            _entry=$(echo "$_history_json" | grep -o '{[^}]*"serial":"'"$_s"'"[^}]*}' || true)
+          fi
           [ -n "$_entry" ] && break
         done
         unset _s
 
         if [ -n "$_entry" ]; then
-          _source=$(echo "$_entry" | grep -o '"source":"[^"]*"' | head -1 | sed 's/"source":"//;s/"//')
-          _source_version=$(echo "$_entry" | grep -o '"version":"[^"]*"' | head -1 | sed 's/"version":"//;s/"//')
-          _text=$(echo "$_entry" | grep -o '"text":"[^"]*"' | head -1 | sed 's/"text":"//;s/"//')
+          _source=$(echo "$_entry" | grep -o '"source":"[^"]*"' | head -1 | sed 's/"source":"//;s/"//' || true)
+          _source_version=$(echo "$_entry" | grep -o '"version":"[^"]*"' | head -1 | sed 's/"version":"//;s/"//' || true)
+          _text=$(echo "$_entry" | grep -o '"text":"[^"]*"' | head -1 | sed 's/"text":"//;s/"//' || true)
           [ -z "$_source" ] && _source="unknown"
           [ -z "$_source_version" ] && _source_version="?"
           [ -z "$_text" ] && _text="$_source_version"
 
           _softbanned=false
-          echo "$_entry" | grep -q '"softbanned":true' 2>/dev/null && _softbanned=true
+          echo "$_entry" | grep -q '"softbanned":true' 2>/dev/null && _softbanned=true || true
 
-          _latest_for_source=$(echo "$_history_json" | grep -o '"'"$_source"'":"[^"]*"' | sed 's/.*":"//;s/"//')
+          _latest_for_source=$(echo "$_history_json" | grep -o '"'"$_source"'":"[^"]*"' | sed 's/.*":"//;s/"//' || true)
           if [ -n "$_source_version" ] && [ "$_source_version" = "$_latest_for_source" ]; then
             _up_to_date=true
           fi

@@ -7,6 +7,9 @@ const t = (key: string, fallback: string): string => getTranslation(key) || fall
 import type { InfoJson, KeyboxInfoJson, KeystoreManagerJson } from './types.js';
 
 export async function initDevice() {
+  document.getElementById('kb-refresh-btn')?.addEventListener('click', () => {
+    recomputeKeyboxStatus().catch(() => {});
+  });
   await Promise.all([refreshDevice(), refreshKeyboxStatus(), refreshKeystoreManager()]);
 }
 
@@ -28,12 +31,25 @@ export async function refreshDevice(): Promise<InfoJson | null> {
 }
 
 export async function refreshKeyboxStatus(): Promise<KeyboxInfoJson | null> {
-  const preloaded = (window as any).__keyboxInfoPromise;
-  const diskData = preloaded && typeof preloaded?.then === 'function'
-    ? await preloaded
-    : await fetchJson<KeyboxInfoJson>(API_URLS.KEYBOX_INFO!);
+  const w = window as any;
+  const preloaded = w.__keyboxInfoPromise;
+  w.__keyboxInfoPromise = null;
+  let diskData: KeyboxInfoJson | null =
+    preloaded && typeof preloaded?.then === 'function' ? await preloaded : null;
+  if (!diskData) {
+    diskData = await fetchJson<KeyboxInfoJson>('./json/keybox_info.json');
+  }
   if (diskData) applyKeyboxStatus(diskData);
   return diskData;
+}
+
+async function recomputeKeyboxStatus(): Promise<KeyboxInfoJson | null> {
+  try {
+    await runScript('keybox_info.sh', 'feature');
+  } catch (e) {
+    console.warn('Keybox info script failed:', e);
+  }
+  return refreshKeyboxStatus();
 }
 
 export async function refreshKeystoreManager(): Promise<KeystoreManagerJson | null> {
