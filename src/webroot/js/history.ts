@@ -146,7 +146,7 @@ export async function renderActivityPreview() {
   container.innerHTML = '';
 
   const VISIBLE = 4;
-  for (let i = 0; i < Math.min(count, VISIBLE); i++) {
+  for (let i = 0; i < count; i++) {
     const entry = allEntries[i]!;
     const isError = entry.code !== undefined ? entry.code !== 0 : entry.output.toLowerCase().includes('error');
     const friendlyName = entry.script === 'action.sh' ? 'Action' : (t(getFriendlyNames()[entry.script] ?? '', '') || entry.script);
@@ -154,6 +154,7 @@ export async function renderActivityPreview() {
     const desc = entry.output.split('\n').map(stripLog).reverse().find(l => l.trim() && !/^(>|x |\[!\])/.test(l))?.slice(0, 50) || '';
     const item = document.createElement('div');
     item.className = 'recent-activity-item';
+    if (i >= VISIBLE) item.style.display = 'none';
     item.innerHTML = `<div class="recent-activity-item-icon recent-activity-item-icon--${isError ? 'error' : 'success'}"><md-icon aria-hidden="true">${isError ? 'error' : 'check_circle'}</md-icon></div>
       <div class="recent-activity-item-content"><p class="recent-activity-item-title">${escapeHtml(friendlyName)}</p><p class="recent-activity-item-desc">${escapeHtml(desc)}</p></div>
       <span class="recent-activity-item-time">${formatRelativeTime(entry.time)}</span>`;
@@ -164,22 +165,15 @@ export async function renderActivityPreview() {
     const toggle = document.createElement('div');
     toggle.className = 'recent-activity-toggle';
     toggle.textContent = t('home_show_all', 'Show all') + ` (${count})`;
+    let expanded = false;
     toggle.addEventListener('click', () => {
-      const expanded = toggle.textContent?.startsWith('Show less');
-      if (expanded) {
-        container.querySelectorAll('.recent-activity-item').forEach((el, i) => (el as HTMLElement).style.display = i >= VISIBLE ? 'none' : '');
-        toggle.textContent = t('home_show_all', 'Show all') + ` (${count})`;
-      } else {
-        for (let i = VISIBLE; i < count; i++) {
-          const e = allEntries[i]; if (!e) continue;
-          const item = document.createElement('div');
-          item.className = 'recent-activity-item';
-          item.innerHTML = `<div class="recent-activity-item-icon recent-activity-item-icon--success"><md-icon>check_circle</md-icon></div>
-            <div class="recent-activity-item-content"><p class="recent-activity-item-title">${escapeHtml(e.script)}</p></div>`;
-          container.insertBefore(item, toggle);
-        }
-        toggle.textContent = t('home_show_less', 'Show less');
-      }
+      expanded = !expanded;
+      container.querySelectorAll('.recent-activity-item').forEach((el, i) => {
+        (el as HTMLElement).style.display = !expanded && i >= VISIBLE ? 'none' : '';
+      });
+      toggle.textContent = expanded
+        ? t('home_show_less', 'Show less')
+        : t('home_show_all', 'Show all') + ` (${count})`;
     });
     container.appendChild(toggle);
   }
