@@ -61,20 +61,17 @@ ksm_available() {
   [ "$KSM" != "none" ] && [ -n "$KSM_DIR" ] && [ -d "$KSM_DIR" ]
 }
 
-# OMK keymint only — injector restart stops keystore2.
-# Explicit tools only; Hot apply covers Specter config writes.
+# Explicit Tools for injector; keymint also auto-touches on trust field saves.
 ksm_reload() {
   [ "$KSM" = "omk" ] || return 0
   mkdir -p "$OMK_RESTART_DIR" 2>/dev/null || true
   touch "$OMK_RESTART_DIR/restart.keymint" 2>/dev/null
 }
 
-ksm_reload_full() {
+ksm_reload_injector() {
   [ "$KSM" = "omk" ] || return 0
   mkdir -p "$OMK_RESTART_DIR" 2>/dev/null || true
-  touch "$OMK_RESTART_DIR/restart.keymint" 2>/dev/null
   touch "$OMK_RESTART_DIR/restart.injector" 2>/dev/null
-  touch "$OMK_RESTART_DIR/restart.all" 2>/dev/null
 }
 
 _ksm_inplace_from() {

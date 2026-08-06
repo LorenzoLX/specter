@@ -426,9 +426,8 @@
   "advance_export_logs": "Экспорт логов",
   "advance_export_logs_desc": "Сохранить все отладочные логи Specter в /sdcard/Download/",
   "tools_restart_omk_keymint": "Перезапустить keymint OMK",
-  "tools_restart_omk_keymint_desc": "Перезагружает keymint OhMyKeymint без перезапуска injector",
-  "tools_restart_omk_full": "Полная перезагрузка OMK",
-  "tools_restart_omk_full_desc": "Перезапуск keymint, injector и всех демонов",
-  "tools_restart_omk_full_confirm": "Полная перезагрузка OMK останавливает keystore2 (SIGTERM/SIGKILL) через injector перед повторной инъекцией. Продолжить?",
-  "tools_support_section": "Поддержка"
+  "tools_restart_omk_keymint_desc": "Use after changing OMK OS version or boot key.",
+  "tools_support_section": "Поддержка",
+  "tools_restart_omk_injector": "Перезапустить injector OMK",
+  "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app."
 }

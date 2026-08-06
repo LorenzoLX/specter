@@ -9,6 +9,6 @@ if [ "$KSM" != "omk" ]; then
   die "OhMyKeymint is not the active keystore manager (${KSM_NAME:-none})"
 fi
 
-ksm_reload_full
-log_i "OMK_RESTART" "Full OMK reload requested"
+ksm_reload_injector
+log_i "OMK_RESTART" "Injector restart requested"
 exit 0

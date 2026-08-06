@@ -421,14 +421,13 @@
   "advance_export_logs": "Ekspor Log",
   "advance_export_logs_desc": "Simpan semua log debug Specter ke /sdcard/Download/",
   "tools_restart_omk_keymint": "Mulai Ulang keymint OMK",
-  "tools_restart_omk_keymint_desc": "Memuat ulang keymint OhMyKeymint tanpa memulai ulang injector",
-  "tools_restart_omk_full": "Muat ulang OMK penuh",
-  "tools_restart_omk_full_desc": "Mulai ulang keymint, injector, dan semua daemon",
-  "tools_restart_omk_full_confirm": "Muat ulang OMK penuh menghentikan keystore2 (SIGTERM/SIGKILL) via jalur injector sebelum injeksi ulang. Lanjutkan?",
+  "tools_restart_omk_keymint_desc": "Use after changing OMK OS version or boot key.",
   "tools_support_section": "Dukungan",
   "sp_dialog_label_omk": "Security Patch",
   "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
   "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
   "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
-  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key",
+  "tools_restart_omk_injector": "Mulai Ulang injector OMK",
+  "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app."
 }

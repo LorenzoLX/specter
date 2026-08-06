@@ -421,14 +421,13 @@
   "advance_export_logs": "Günlükleri Dışa Aktar",
   "advance_export_logs_desc": "Tüm günlükleri /sdcard/Download/ klasörüne kaydet",
   "tools_restart_omk_keymint": "OMK keymint'i yeniden başlat",
-  "tools_restart_omk_keymint_desc": "Injector'ı yeniden başlatmadan OhMyKeymint keymint'i yeniden yükler",
-  "tools_restart_omk_full": "Tam OMK yeniden yükleme",
-  "tools_restart_omk_full_desc": "keymint, injector ve tüm daemon'ları yeniden başlatır",
-  "tools_restart_omk_full_confirm": "Tam OMK yeniden yükleme, yeniden enjekte etmeden önce injector yoluyla keystore2'ye SIGTERM/SIGKILL gönderir. Devam edilsin mi?",
+  "tools_restart_omk_keymint_desc": "Use after changing OMK OS version or boot key.",
   "tools_support_section": "Destek",
   "sp_dialog_label_omk": "Security Patch",
   "sp_invalid_omk": "Use auto, latest, or YYYY-MM-DD",
   "sp_helper_omk": "auto, latest, or YYYY-MM-DD",
   "sp_placeholder_omk": "auto, latest, or YYYY-MM-DD",
-  "omk_vb_reboot_required": "Device reboot required for random→auto VB key"
+  "omk_vb_reboot_required": "Device reboot required for random→auto VB key",
+  "tools_restart_omk_injector": "OMK injector'ı yeniden başlat",
+  "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app."
 }
