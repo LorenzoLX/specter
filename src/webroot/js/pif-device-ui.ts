@@ -3,7 +3,6 @@ import '@material/web/iconbutton/icon-button.js';
 import '@material/web/icon/icon.js';
 import { exec, getDataDir } from './bridge.js';
 import { cfgGet, cfgSet } from './cfg.js';
-import { PIF_DIR } from './constants.js';
 import { openFileBrowser } from './file-browser.js';
 import { showConfirm } from './dialog.js';
 import { showToast } from './toast.js';
@@ -13,6 +12,13 @@ import { getTranslation } from './i18n.js';
 const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
 
 const IMPORTED_PREFIX = 'imported:';
+
+// Keep in sync with src/lib/pif_preferred.sh PIF_BOT_MIRRORS
+const DEVICE_LIST_URLS = [
+  'https://fastly.jsdelivr.net/gh/KOWX712/PlayIntegrityFix@bot/device_list.json',
+  'https://raw.githubusercontent.com/KOWX712/PlayIntegrityFix/bot/device_list.json',
+  'https://gh.sevencdn.com/https://raw.githubusercontent.com/KOWX712/PlayIntegrityFix/bot/device_list.json',
+];
 
 type PifDevice = { model: string; product: string; imported?: boolean };
 
@@ -31,23 +37,6 @@ function importId(content: string): string {
   let h = 0;
   for (let i = 0; i < content.length; i++) h = ((h << 5) - h + content.charCodeAt(i)) | 0;
   return Math.abs(h).toString(36);
-}
-
-function parseDeviceList(stdout: string): PifDevice[] {
-  const start = stdout.indexOf('{');
-  const end = stdout.lastIndexOf('}');
-  if (start < 0 || end <= start) return [];
-  const data = JSON.parse(stdout.slice(start, end + 1)) as { model?: string[]; product?: string[] };
-  const models = data.model || [];
-  const products = data.product || [];
-  const n = Math.min(models.length, products.length);
-  const out: PifDevice[] = [];
-  for (let i = 0; i < n; i++) {
-    const model = models[i];
-    const product = products[i];
-    if (model && product) out.push({ model, product });
-  }
-  return out;
 }
 
 function encodePreferred(devices: PifDevice[]): string {
@@ -75,11 +64,26 @@ async function loadPreferred(): Promise<PifDevice[]> {
   return product ? [{ model, product }] : [];
 }
 
-async function isInjectInstalled(): Promise<boolean> {
-  const { stdout } = await exec(
-    `grep '^name=' ${shellEscape(PIF_DIR + '/module.prop')} 2>/dev/null || true`
-  );
-  return /INJECT/i.test(stdout || '');
+let canaryListPromise: Promise<PifDevice[]> | null = null;
+
+async function fetchDeviceListJson(): Promise<PifDevice[]> {
+  for (const url of DEVICE_LIST_URLS) {
+    try {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) continue;
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) continue;
+      return (data as PifDevice[]).filter(d => d?.model && d?.product);
+    } catch {
+      /* try next */
+    }
+  }
+  return [];
+}
+
+function ensureCanaryList(): Promise<PifDevice[]> {
+  if (!canaryListPromise) canaryListPromise = fetchDeviceListJson();
+  return canaryListPromise;
 }
 
 async function loadImported(): Promise<PifDevice[]> {
@@ -138,11 +142,14 @@ async function openPifDeviceDialog() {
   `;
   document.body.appendChild(dialog);
   dialog.quick = true;
-  dialog.addEventListener('close', () => document.body.removeChild(dialog));
+  let closed = false;
+  dialog.addEventListener('close', () => {
+    closed = true;
+    document.body.removeChild(dialog);
+  });
   dialog.querySelector('#pif-dev-cancel')!.addEventListener('click', () => dialog.close());
 
-  const saved = await loadPreferred();
-  const savedProducts = new Set(saved.map(d => d.product));
+  const savedProducts = new Set<string>();
   let dirty = false;
   let listed: PifDevice[] = [];
   const content = dialog.querySelector('#pif-device-pane') as HTMLElement;
@@ -273,16 +280,13 @@ async function openPifDeviceDialog() {
 
   dialog.show();
 
-  const imported = await loadImported();
-  let canary: PifDevice[] = [];
-  if (await isInjectInstalled()) {
-    try {
-      const { stdout } = await exec(`sh ${shellEscape(PIF_DIR + '/autopif.sh')} --list 2>/dev/null`);
-      canary = parseDeviceList(stdout || '');
-    } catch {
-      canary = [];
-    }
-  }
+  const [saved, imported, canary] = await Promise.all([
+    loadPreferred(),
+    loadImported(),
+    ensureCanaryList(),
+  ]);
+  if (closed) return;
+  for (const d of saved) savedProducts.add(d.product);
   render([...imported, ...canary]);
 }
 
@@ -290,6 +294,9 @@ export async function wirePifDevice() {
   const row = document.getElementById('pif-choose-device');
   if (!row) return;
   row.hidden = false;
-  await refreshChooseDesc();
-  row.addEventListener('click', () => openPifDeviceDialog());
+  void ensureCanaryList();
+  row.addEventListener('click', () => {
+    void openPifDeviceDialog();
+  });
+  void refreshChooseDesc();
 }

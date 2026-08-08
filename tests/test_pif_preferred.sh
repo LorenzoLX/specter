@@ -4,11 +4,17 @@ bootstrap
 . "$REPO_ROOT/src/lib/pif_preferred.sh"
 
 _LIST='{"model":["Pixel 6","Pixel 10 Pro"],"product":["oriole_beta","mustang_beta"]}'
+_LIST_ARR='[{"model":"Pixel 6","product":"oriole_beta"},{"model":"Pixel 10 Pro","product":"mustang_beta"}]'
 
 pif_product_in_list "$_LIST" "mustang_beta"
-assert_eq "mustang in list" "0" "$?"
+assert_eq "mustang in --list object" "0" "$?"
+pif_product_in_list "$_LIST_ARR" "mustang_beta"
+assert_eq "mustang in device_list array" "0" "$?"
 pif_product_in_list "$_LIST" "beta"
 assert_eq "no bare substring match" "1" "$?"
+
+assert_eq "inject dest" "/data/adb/pif.prop" "$(pif_prop_dest 'Play Integrity Fix [INJECT]')"
+assert_eq "fork dest" "/data/adb/modules/playintegrityfix/custom.pif.prop" "$(PIF_DIR=/data/adb/modules/playintegrityfix pif_prop_dest 'Play Integrity Fork')"
 
 # --- validate Inject-style pif.prop ---
 _tmp=$(mktemp -d)
@@ -32,15 +38,15 @@ SPECTER_DIR="$_tmp"
 mkdir -p "$SPECTER_DIR/pif_imported"
 cp "$_tmp/ok.prop" "$SPECTER_DIR/pif_imported/abc.prop"
 
-_choice=$(pif_choose_preferred "$_LIST" "Gone|raven_beta
+_choice=$(pif_choose_preferred "$_LIST_ARR" "Gone|raven_beta
 Pixel 10 Pro|imported:abc")
 assert_eq "choose keeps imported when canary gone" "Pixel 10 Pro|imported:abc" "$_choice"
 
-pif_choose_preferred "$_LIST" "Gone|raven_beta
+pif_choose_preferred "$_LIST_ARR" "Gone|raven_beta
 Gone|imported:missing"
 assert_eq "choose fails when imported file missing" "1" "$?"
 
-_choice=$(pif_choose_preferred "$_LIST" "Pixel 6|oriole_beta
+_choice=$(pif_choose_preferred "$_LIST_ARR" "Pixel 6|oriole_beta
 Pixel 10 Pro|imported:abc")
 case "$_choice" in
   "Pixel 6|oriole_beta"|"Pixel 10 Pro|imported:abc") ok "choose picks from mixed pool" ;;
