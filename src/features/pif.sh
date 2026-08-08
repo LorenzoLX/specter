@@ -47,9 +47,9 @@ EOF
 
   _choice=$(pif_choose_preferred "$_list" "$_prefs") || _choice=""
   if [ -z "$_choice" ]; then
-    log_w "PIF" "No preferred devices left, skipping fetch"
+    log_w "PIF" "No preferred devices left, falling back to random"
     unset _prefs _list _choice _has_canary
-    return 0
+    return 1
   fi
 
   _dest=$(pif_prop_dest "$_NAME")
