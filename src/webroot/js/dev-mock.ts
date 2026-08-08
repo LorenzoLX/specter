@@ -166,7 +166,9 @@ if (typeof window.ksu === 'undefined') {
           cb(0, 'name=Play Integrity Fix [INJECT]\n', '');
         } else if (cmd.includes('autopif.sh') && cmd.includes('--list')) {
           cb(0, MOCK_PIF_DEVICES, '');
-        } else if (cmd.includes('target.txt')) {
+        } else if (cmd.includes('target.sh --set')) {
+          cb(0, '', '');
+        } else if (cmd.includes('target.sh --list-raw') || cmd.includes('target.txt')) {
           cb(0, MOCK_TARGET_TXT, '');
         } else if (cmd.includes('pm list packages -3')) {
           cb(0, MOCK_USER_PKGS, '');
