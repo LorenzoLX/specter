@@ -16,7 +16,6 @@ fi
 _NAME=$(grep "^name=" "$PIF_DIR/module.prop" | cut -d= -f2-)
 log_i "PIF" "Detected: $_NAME"
 
-# Returns 0 if handled (including skip), 1 if no prefs (caller should do random fetch).
 _pif_apply_preferred() {
   _prefs=$(cfg_get pif_preferred_devices '')
   if [ -z "$_prefs" ]; then
@@ -27,40 +26,24 @@ _pif_apply_preferred() {
   fi
   [ -n "$_prefs" ] || return 1
 
-  _has_canary=0
-  while IFS= read -r _pl || [ -n "$_pl" ]; do
-    [ -n "$_pl" ] || continue
-    case "${_pl#*|}" in
-      imported:*) ;;
-      *) _has_canary=1; break ;;
-    esac
-  done <<EOF
-$_prefs
-EOF
-  unset _pl
-
-  _list=""
-  if [ "$_has_canary" = "1" ]; then
-    check_network || { log_e "PIF" "No internet connection"; exit 1; }
-    _list=$(pif_fetch_device_list) || _list=""
-  fi
-
-  _choice=$(pif_choose_preferred "$_list" "$_prefs") || _choice=""
+  _choice=$(pif_choose_preferred "$_prefs") || _choice=""
   if [ -z "$_choice" ]; then
     log_w "PIF" "No preferred devices left, falling back to random"
-    unset _prefs _list _choice _has_canary
+    unset _prefs _choice
     return 1
   fi
 
   _dest=$(pif_prop_dest "$_NAME")
-  _pref_model="${_choice%%|*}"
-  _pref_product="${_choice#*|}"
+  _pref_model="${_choice%\|*}"
+  _pref_product="${_choice##*\|}"
+  _applied=0
   case "$_pref_product" in
     imported:*)
       _imp_id="${_pref_product#imported:}"
       log_i "PIF" "Using imported device: $_pref_model ($_imp_id)"
       if pif_apply_imported "$_imp_id" "$_dest"; then
         _pif_model="$_pref_model"
+        _applied=1
       else
         log_w "PIF" "Failed to apply imported device $_imp_id"
       fi
@@ -68,15 +51,32 @@ EOF
       ;;
     *)
       log_i "PIF" "Using preferred device: $_pref_model ($_pref_product)"
-      if pif_apply_github_prop "$_pref_product" "$_dest"; then
-        _pif_model=$(pif_prop_get "$_dest" MODEL)
-      else
-        log_w "PIF" "Failed to fetch GitHub prop for $_pref_product"
-      fi
+      check_network || { log_e "PIF" "No internet connection"; exit 1; }
+      case "$_NAME" in
+        *Fork*)
+          if MODEL="$_pref_model" PRODUCT="$_pref_product" sh "$PIF_DIR/autopif4.sh" >/dev/null 2>&1; then
+            _pif_model=$(pif_prop_get "$_dest" MODEL)
+            [ -n "$_pif_model" ] || _pif_model="$_pref_model"
+            _applied=1
+          else
+            log_w "PIF" "Fork autopif4 failed for $_pref_product"
+          fi
+          ;;
+        *)
+          if pif_apply_github_prop "$_pref_product" "$_dest"; then
+            _pif_model=$(pif_prop_get "$_dest" MODEL)
+            _applied=1
+          else
+            log_w "PIF" "Failed to fetch GitHub prop for $_pref_product"
+          fi
+          ;;
+      esac
       ;;
   esac
   [ -n "$_pif_model" ] && log_i "PIF" "Selected Device: $_pif_model"
-  unset _pref_model _pref_product _choice _prefs _list _has_canary _dest _pif_model
+  unset _pref_model _pref_product _choice _prefs _dest _pif_model
+  [ "$_applied" = "1" ] || { unset _applied; return 1; }
+  unset _applied
   return 0
 }
 
