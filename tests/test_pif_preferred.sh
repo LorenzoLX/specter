@@ -54,4 +54,25 @@ grep -q '^spoofBuild=true$' "$_tmp/dest.prop"
 assert_eq "merge keeps spoofBuild" "0" "$?"
 
 rm -rf "$_tmp"
+
+# pif_apply_preferred: migrate+imported success, Canary no-net → 2
+bootstrap
+source_libs
+. "$REPO_ROOT/src/lib/pif_preferred.sh"
+PIF_DIR="$TEST_ROOT/pif"
+mkdir -p "$PIF_DIR" "$SPECTER_DIR/pif_imported"
+printf '%s\n' 'FINGERPRINT=google/blazer/blazer:17/CP2A.1/1:user/release-keys' 'MODEL=Pixel 10 Pro' \
+  >"$SPECTER_DIR/pif_imported/abc.prop"
+set_cfg pif_preferred_product "imported:abc"
+set_cfg pif_preferred_model "Pixel 10 Pro"
+pif_apply_preferred "Play Integrity Fork"
+assert_eq "apply preferred imported" "0" "$?"
+assert_file_eq "apply preferred wrote dest" "$PIF_DIR/custom.pif.prop" "$(cat "$SPECTER_DIR/pif_imported/abc.prop")"
+set_cfg pif_preferred_devices "Pixel 9 Pro|caiman_beta"
+check_network() { return 1; }
+pif_apply_preferred "Play Integrity Fork"
+assert_eq "apply preferred needs network" "2" "$?"
+
 done_testing
+
+
