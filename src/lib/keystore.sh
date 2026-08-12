@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# Keystore backends: Tricky Store / TEESimulator-RS (txt), JingMatrix teesim (json), OMK (toml).
+# Keystore backends (auto pick): JingMatrix teesim → Tricky Store / TEESimulator-RS → OMK.
 # Call detect_keystore_manager() after common.sh before using KSM_*.
 
 detect_keystore_manager() {
@@ -9,10 +9,10 @@ detect_keystore_manager() {
     teesim) KSM=teesim ;;
     omk) KSM=omk ;;
     *)
-      if [ -n "$(_ts_prop)" ]; then
-        KSM=trickystore
-      elif [ -n "$(_teesim_prop)" ]; then
+      if [ -n "$(_teesim_prop)" ]; then
         KSM=teesim
+      elif [ -n "$(_ts_prop)" ]; then
+        KSM=trickystore
       elif [ -n "$(_omk_prop)" ]; then
         KSM=omk
       else

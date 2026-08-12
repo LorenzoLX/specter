@@ -47,7 +47,7 @@ mk_module tricky_store "Tricky Store"
 mk_module teesim "TEESimulator"
 mkdir -p "$TEESIM_DIR"
 detect_keystore_manager
-assert_eq "detect: ts+teesim -> trickystore" "trickystore" "$KSM"
+assert_eq "detect: ts+teesim -> teesim" "teesim" "$KSM"
 
 bootstrap
 source_libs
