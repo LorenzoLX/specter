@@ -82,12 +82,11 @@ detect_keystore_manager() {
       KSM_KEYBOX=""
       KSM_TARGETS=""
       KSM_SECURITY=""
-      KSM_LOCKED=""
       KSM_FORMAT=""
       ;;
   esac
 
-  export KSM KSM_NAME KSM_DIR KSM_KEYBOX KSM_TARGETS KSM_SECURITY KSM_LOCKED KSM_FORMAT
+  export KSM KSM_NAME KSM_DIR KSM_KEYBOX KSM_TARGETS KSM_SECURITY KSM_FORMAT
   unset _dkm_override
 }
 
@@ -146,7 +145,8 @@ ksm_read_targets() {
 
 ksm_read_targets_raw() {
   case "$KSM_FORMAT" in
-    json|toml) ksm_read_targets ;;
+    json) _teesim_read_apps "$KSM_TARGETS" default ;;
+    toml) ksm_read_targets ;;
     *) [ -f "$KSM_TARGETS" ] && cat "$KSM_TARGETS" ;;
   esac
 }
@@ -186,6 +186,131 @@ ksm_commit_targets() {
   unset _kct_src
 }
 
+# Commit a desired flat package list (one per line, optional !/? suffix) while
+# preserving configuration the flat list cannot express:
+#  - txt: [name.xml] keybox scoping sections and their member packages
+#  - json: non-default TEESimulator profiles (only the default profile's apps
+#    are managed; ksm_read_targets_raw already returns default-only)
+#  - toml: no sections, same as ksm_commit_targets
+ksm_commit_targets_merge() {
+  _kcm_src="$1"
+  case "$KSM_FORMAT" in
+    txt)
+      if [ -f "$KSM_TARGETS" ]; then
+        _ksm_txt_merge "$_kcm_src" || { unset _kcm_src; return 1; }
+      else
+        ksm_commit_targets "$_kcm_src" || { unset _kcm_src; return 1; }
+      fi
+      ;;
+    json) _teesim_commit_apps "$KSM_TARGETS" "$_kcm_src" || { unset _kcm_src; return 1; } ;;
+    toml) ksm_commit_targets "$_kcm_src" || { unset _kcm_src; return 1; } ;;
+  esac
+  unset _kcm_src
+}
+
+# Rewrite target.txt from $1: packages keep their [name.xml] section
+# membership, package lines take the desired suffix, deselected packages are
+# dropped, new packages land in the default (pre-section) block.
+_ksm_txt_merge() {
+  _ktm_src="$1"
+  _ktm_out="${KSM_TARGETS}.new.$$"
+  awk -v srcfile="$_ktm_src" '
+    BEGIN {
+      while ((getline l < srcfile) > 0) {
+        sub(/\r$/, "", l)
+        if (l ~ /^[[:space:]]*$/ || l ~ /^[[:space:]]*\[/) continue
+        base = l
+        sub(/[!?][[:space:]]*$/, "", base)
+        if (base == "") continue
+        want[base] = l
+        if (!(base in ordered)) { ordered[base] = 1; order[++n] = base }
+      }
+      close(srcfile)
+    }
+    {
+      line = $0
+      sub(/\r$/, "", line)
+      if (line ~ /^[[:space:]]*\[/) { sect[++nsect] = line; next }
+      if (line ~ /^[[:space:]]*$/ || line ~ /^[[:space:]]*#/) next
+      base = line
+      sub(/[!?][[:space:]]*$/, "", base)
+      if ((base in want) && !(base in seen)) {
+        seen[base] = 1
+        if (nsect > 0) sec_of[base] = nsect
+      }
+    }
+    END {
+      for (i = 1; i <= n; i++) {
+        if (order[i] in sec_of) continue
+        print want[order[i]]
+      }
+      for (s = 1; s <= nsect; s++) {
+        print sect[s]
+        for (i = 1; i <= n; i++) {
+          if ((order[i] in sec_of) && sec_of[order[i]] == s) print want[order[i]]
+        }
+      }
+    }
+  ' "$KSM_TARGETS" > "$_ktm_out" || {
+    rm -f "$_ktm_out"
+    unset _ktm_src _ktm_out
+    return 1
+  }
+  rm -f "${KSM_TARGETS}.bak"
+  cp "$KSM_TARGETS" "${KSM_TARGETS}.bak"
+  mv -f "$_ktm_out" "$KSM_TARGETS" || {
+    rm -f "$_ktm_out"
+    unset _ktm_src _ktm_out
+    return 1
+  }
+  unset _ktm_src _ktm_out
+}
+
+# Insert the lines from $2 into $1's default block, i.e. before the first
+# [name.xml] section header (appended when no sections exist). Keeps new
+# packages scoped to the default keybox instead of the last section.
+_txt_insert_default() {
+  _tid_file="$1" _tid_add="$2"
+  [ -s "$_tid_add" ] || { unset _tid_file _tid_add; return 0; }
+  _tid_tmp="${_tid_file}.new.$$"
+  awk -v add="$_tid_add" '
+    BEGIN { inserted = 0 }
+    !inserted && /^[[:space:]]*\[/ {
+      while ((getline l < add) > 0) { if (l != "") print l }
+      close(add)
+      inserted = 1
+    }
+    { print }
+    END {
+      if (!inserted) {
+        while ((getline l < add) > 0) { if (l != "") print l }
+        close(add)
+      }
+    }
+  ' "$_tid_file" > "$_tid_tmp" || {
+    rm -f "$_tid_tmp"
+    unset _tid_file _tid_add _tid_tmp
+    return 1
+  }
+  mv -f "$_tid_tmp" "$_tid_file" || {
+    rm -f "$_tid_tmp"
+    unset _tid_file _tid_add _tid_tmp
+    return 1
+  }
+  unset _tid_file _tid_add _tid_tmp
+}
+
+# Wait up to $2 seconds (default 10) for $1 to appear.
+_ksm_wait_file() {
+  _kwf_file="$1" _kwf_tries="${2:-10}" _kwf_i=0
+  while [ ! -f "$_kwf_file" ] && [ "$_kwf_i" -lt "$_kwf_tries" ]; do
+    sleep 1
+    _kwf_i=$((_kwf_i + 1))
+  done
+  [ -f "$_kwf_file" ]
+  unset _kwf_file _kwf_tries _kwf_i
+}
+
 ksm_get_security_patch() {
   case "$KSM_FORMAT" in
     json)
@@ -198,8 +323,16 @@ ksm_get_security_patch() {
       ;;
     *)
       [ -f "$KSM_SECURITY" ] || return 1
-      _kgsp=$(grep -E '^boot=' "$KSM_SECURITY" 2>/dev/null | head -1 | cut -d= -f2) || _kgsp=""
-      [ -n "$_kgsp" ] || _kgsp=$(grep -E '^all=' "$KSM_SECURITY" 2>/dev/null | head -1 | cut -d= -f2) || _kgsp=""
+      _kgsp=$(awk '
+        /^[[:space:]]*\[/ { exit }
+        /^[[:space:]]*boot=/ { sub(/^[[:space:]]*boot=/,""); sub(/[[:space:]]*$/,""); if ($0 != "") { print; exit } }
+      ' "$KSM_SECURITY") || _kgsp=""
+      if [ -z "$_kgsp" ]; then
+        _kgsp=$(awk '
+          /^[[:space:]]*\[/ { exit }
+          /^[[:space:]]*all=/ { sub(/^[[:space:]]*all=/,""); sub(/[[:space:]]*$/,""); if ($0 != "") { print; exit } }
+        ' "$KSM_SECURITY") || _kgsp=""
+      fi
       [ -n "$_kgsp" ] || { unset _kgsp; return 1; }
       printf '%s\n' "$_kgsp"
       unset _kgsp
@@ -217,6 +350,11 @@ ksm_set_security_patch() {
       }
       ;;
     toml)
+      _ksm_wait_file "$KSM_SECURITY" 10 || {
+        log_w "KSM" "OMK config.toml not available yet, skip security patch"
+        unset _ksp_date
+        return 1
+      }
       _toml_set_trust_key "$KSM_SECURITY" "security_patch" "\"$_ksp_date\"" || {
         unset _ksp_date
         return 1
@@ -230,9 +368,29 @@ ksm_set_security_patch() {
       fi
       [ -n "$_ksp_vendor" ] || _ksp_vendor="$_ksp_date"
       _ksp_yyyymm=$(printf '%s' "$_ksp_date" | cut -d'-' -f1-2 | tr -d '-')
-      printf 'system=%s\nboot=%s\nvendor=%s\n' "$_ksp_yyyymm" "$_ksp_date" "$_ksp_vendor" \
-        > "$KSM_SECURITY" || { unset _ksp_date _ksp_vendor _ksp_yyyymm; return 1; }
-      unset _ksp_vendor _ksp_yyyymm
+      _ksp_tmp="${KSM_SECURITY}.new.$$"
+      {
+        printf 'system=%s\nboot=%s\nvendor=%s\n' "$_ksp_yyyymm" "$_ksp_date" "$_ksp_vendor"
+        if [ -f "$KSM_SECURITY" ]; then
+          # Keep per-package [pkg] sections and their contents untouched.
+          awk '/^[[:space:]]*\[/ { emit = 1 } emit { print }' "$KSM_SECURITY"
+        fi
+      } > "$_ksp_tmp"
+      if [ -f "$KSM_SECURITY" ]; then
+        _ksm_inplace_from "$_ksp_tmp" "$KSM_SECURITY" || {
+          rm -f "$_ksp_tmp"
+          unset _ksp_date _ksp_vendor _ksp_yyyymm _ksp_tmp
+          return 1
+        }
+        rm -f "$_ksp_tmp"
+      else
+        mv -f "$_ksp_tmp" "$KSM_SECURITY" || {
+          rm -f "$_ksp_tmp"
+          unset _ksp_date _ksp_vendor _ksp_yyyymm _ksp_tmp
+          return 1
+        }
+      fi
+      unset _ksp_vendor _ksp_yyyymm _ksp_tmp
       ;;
   esac
   unset _ksp_date
@@ -265,6 +423,11 @@ ksm_set_trust_field() {
   _kst_key="$1" _kst_val="$2"
   case "$KSM_FORMAT" in
     toml)
+      _ksm_wait_file "$KSM_SECURITY" 10 || {
+        log_w "KSM" "OMK config.toml not available yet, skip trust field"
+        unset _kst_key _kst_val
+        return 1
+      }
       case "$_kst_key" in
         os_version)
           _toml_set_trust_key "$KSM_SECURITY" "os_version" "$_kst_val"

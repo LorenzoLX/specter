@@ -290,11 +290,19 @@ _teesim_write_ir() {
   unset _twi_file _twi_ir _twi_tmp
 }
 
+# $2 = optional profile id; when set, only that profile's apps are returned.
 _teesim_read_apps() {
-  _tra_file="$1"
-  [ -f "$_tra_file" ] && [ -s "$_tra_file" ] || { unset _tra_file; return 0; }
-  _teesim_to_ir "$_tra_file" | awk '/^A / { print substr($0, 3) }' | sort -u
-  unset _tra_file
+  _tra_file="$1" _tra_profile="${2:-}"
+  [ -f "$_tra_file" ] && [ -s "$_tra_file" ] || { unset _tra_file _tra_profile; return 0; }
+  if [ -n "$_tra_profile" ]; then
+    _teesim_to_ir "$_tra_file" | awk -v prof="$_tra_profile" '
+      /^P / { cur = $2 }
+      cur == prof && /^A / { print substr($0, 3) }
+    ' | sort -u
+  else
+    _teesim_to_ir "$_tra_file" | awk '/^A / { print substr($0, 3) }' | sort -u
+  fi
+  unset _tra_file _tra_profile
 }
 
 _teesim_commit_apps() {
@@ -323,7 +331,12 @@ _teesim_commit_apps() {
       print
       next
     }
-    /^A / { next }
+    /^A / {
+      # Only the default profile is managed; other profiles keep their apps.
+      if (in_def) next
+      print
+      next
+    }
     { print }
     END { if (in_def) flush_def() }
     function flush_def(   p) {
@@ -409,7 +422,9 @@ _teesim_set_mode() {
     return 1
   }
   awk -v mode="$_tsm_mode" '
-    /^M / { print "M " mode; next }
+    BEGIN { cur = "" }
+    /^P / { cur = $2; print; next }
+    cur == "default" && /^M / { print "M " mode; next }
     { print }
   ' "$_tsm_ir" > "${_tsm_ir}.out"
   _teesim_write_ir "$_tsm_cfg" "${_tsm_ir}.out"

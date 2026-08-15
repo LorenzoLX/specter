@@ -36,8 +36,9 @@ case "${1:-}" in
     done
     rm -f "$_set_bases"
     unset _set_bases _set_line _set_entry
-    ksm_commit_targets "$2"
-    log_i "TARGET" "Committed target list from $2"
+    ksm_commit_targets_merge "$2" || die "Failed to commit target list from $2"
+    rm -f "$2"
+    log_i "TARGET" "Committed target list (sections preserved)"
     exit 0
     ;;
 esac
@@ -68,7 +69,7 @@ case "${1}" in
     log_i "TARGET" "Mode: merge-denylist"
     command -v magisk >/dev/null 2>&1 || { log_w "TARGET" "magisk not found, skipping"; exit 0; }
     _merge_setup
-    trap 'rm -f "$_TMP_TARGET" "$_TMP_EXIST"' EXIT
+    trap 'rm -f "$_TMP_TARGET" "$_TMP_EXIST" "$_TMP_ADD"' EXIT
     _merge_load_existing
 
     _denylist=$(magisk --denylist ls 2>/dev/null | awk -F'|' '{print $1}' | grep -v "isolated" || true)
@@ -89,7 +90,7 @@ case "${1}" in
   --merge)
     log_i "TARGET" "Mode: merge"
     _merge_setup
-    trap 'rm -f "$TEMP_PKGS" "${TEMP_PKGS}.filtered" "$_TMP_TARGET" "$_TMP_EXIST"' EXIT
+    trap 'rm -f "$TEMP_PKGS" "${TEMP_PKGS}.filtered" "$_TMP_TARGET" "$_TMP_EXIST" "$_TMP_ADD"' EXIT
     _merge_load_existing
 
     for entry in $FIXED_TARGETS; do

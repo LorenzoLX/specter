@@ -43,11 +43,18 @@ _merge_setup() {
   _count=0; _added=0
   _TMP_EXIST="$SPECTER_DIR/.target_exist.$$"
   _TMP_TARGET="$SPECTER_DIR/.target_new.$$"
+  _TMP_ADD="$SPECTER_DIR/.target_add.$$"
+  : > "$_TMP_ADD"
 }
 
 _merge_cleanup() {
-  [ -f "$_TMP_TARGET" ] && ksm_commit_targets "$_TMP_TARGET"
-  unset _TMP_EXIST _TMP_TARGET
+  if [ -f "$_TMP_TARGET" ]; then
+    # New packages go into the default (pre-section) keybox scope; appending
+    # at the end would silently assign them to the last [name.xml] section.
+    _txt_insert_default "$_TMP_TARGET" "$_TMP_ADD"
+    ksm_commit_targets "$_TMP_TARGET"
+  fi
+  unset _TMP_EXIST _TMP_TARGET _TMP_ADD
 }
 
 _merge_load_existing() {
@@ -67,7 +74,7 @@ _append_missing() {
   _am_base=$(_normalize_pkg "$_am_line")
   [ -z "$_am_base" ] && { unset _am_line _am_base; return 0; }
   if ! grep -Fxq "$_am_base" "$_TMP_EXIST" 2>/dev/null; then
-    printf '%s\n' "$_am_line" >> "$_TMP_TARGET"
+    printf '%s\n' "$_am_line" >> "$_TMP_ADD"
     printf '%s\n' "$_am_base" >> "$_TMP_EXIST"
     _added=$((_added + 1))
   fi

@@ -313,7 +313,8 @@ ksm_set_mode generation
 assert_eq "teesim: mode set" "generation" "$(ksm_get_mode)"
 printf '%s\n' '{"version":1,"profiles":{"default":{"keybox":"keybox.xml","mode":"patch","patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"YYYY-MM-05"},"osVersion":"","brand":"","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.google.android.gms"]},"specter":{"keybox":"keybox.xml","mode":"patch","patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"YYYY-MM-05"},"osVersion":"","brand":"","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.eltavine.duckdetector"]}}}' > "$TEESIM_CONFIG"
 ksm_set_mode generation
-assert_not_contains "teesim: mode on every profile" "$(cat "$TEESIM_CONFIG")" '"mode": "patch"'
+assert_contains "teesim: mode set on default" "$(cat "$TEESIM_CONFIG")" '"mode": "generation"'
+assert_contains "teesim: other profile mode kept" "$(cat "$TEESIM_CONFIG")" '"mode": "patch"'
 
 printf '<AndroidAttestation/>\n' > "$TEST_ROOT/teesim_kb.xml"
 ksm_install_keybox "$TEST_ROOT/teesim_kb.xml" copy
@@ -409,5 +410,88 @@ sh "$REPO_ROOT/src/features/omk_restart_injector.sh" 2>/dev/null; _ori_ok=$?
 assert_exit_code "restart injector: ok" 0 "$_ori_ok"
 assert_file_exists "restart injector: marker" "$OMK_RESTART_DIR/restart.injector"
 assert_file_not_exists "restart injector: no keymint" "$OMK_RESTART_DIR/restart.keymint"
+
+# ---------- security patch txt: per-package sections preserved; global-only reads ----------
+bootstrap
+source_libs
+mk_module tricky_store "Tricky Store"
+detect_keystore_manager
+cat > "$KSM_SECURITY" << 'EOF'
+system=202605
+boot=2026-05-05
+vendor=2026-05-01
+[com.example.app]
+boot=2025-01-01
+system=202501
+EOF
+set_prop "ro.vendor.build.security_patch" "2026-06-01"
+ksm_set_security_patch "2026-06-05"
+_sp_out=$(cat "$KSM_SECURITY")
+assert_contains "patch txt: section kept" "$_sp_out" "[com.example.app]"
+assert_contains "patch txt: section boot kept" "$_sp_out" "boot=2025-01-01"
+assert_contains "patch txt: global boot replaced" "$_sp_out" "boot=2026-06-05"
+assert_eq "patch get txt: global not section" "2026-06-05" "$(ksm_get_security_patch)"
+
+bootstrap
+source_libs
+mk_module tricky_store "Tricky Store"
+detect_keystore_manager
+cat > "$KSM_SECURITY" << 'EOF'
+[com.example.app]
+boot=2025-01-01
+EOF
+ksm_get_security_patch 2>/dev/null; _kgsp_rc=$?
+assert_exit_code "patch get txt: section-only file has no global" 1 "$_kgsp_rc"
+
+# ---------- txt merge commit preserves [name.xml] keybox scoping ----------
+bootstrap
+source_libs
+mk_module tricky_store "Tricky Store"
+detect_keystore_manager
+cat > "$KSM_TARGETS" << 'EOF'
+com.keep.app
+[aosp_keybox.xml]
+com.scoped.app
+com.scoped.old
+EOF
+printf 'com.scoped.app!\ncom.keep.app\ncom.new.app\n' > "$TEST_ROOT/staging_merge.txt"
+ksm_commit_targets_merge "$TEST_ROOT/staging_merge.txt"
+_kt_merge=$(cat "$KSM_TARGETS")
+assert_contains "merge: section kept" "$_kt_merge" "[aosp_keybox.xml]"
+assert_contains "merge: member suffix updated" "$_kt_merge" "com.scoped.app!"
+assert_contains "merge: new app in default" "$_kt_merge" "com.new.app"
+assert_not_contains "merge: unselected member dropped" "$_kt_merge" "com.scoped.old"
+_kt_new=$(grep -n 'com.new.app' "$KSM_TARGETS" | cut -d: -f1)
+_kt_sec=$(grep -n '\[aosp_keybox.xml\]' "$KSM_TARGETS" | cut -d: -f1)
+[ -n "$_kt_new" ] && [ -n "$_kt_sec" ] && [ "$_kt_new" -lt "$_kt_sec" ] \
+  && ok "merge: default block before section" || fail "merge: default block before section"
+
+# ---------- txt insert into default block ----------
+bootstrap
+source_libs
+_tgt="$TEST_ROOT/tgt.txt"
+printf 'com.a\n[sec.xml]\ncom.b\n' > "$_tgt"
+printf 'com.new1\ncom.new2\n' > "$TEST_ROOT/add.txt"
+_txt_insert_default "$_tgt" "$TEST_ROOT/add.txt"
+_tid_out=$(cat "$_tgt")
+assert_contains "insert: first add" "$_tid_out" "com.new1"
+_tid_new=$(grep -n 'com.new2' "$_tgt" | cut -d: -f1)
+_tid_sec=$(grep -n '\[sec.xml\]' "$_tgt" | cut -d: -f1)
+[ "$_tid_new" -lt "$_tid_sec" ] && ok "insert: additions before section" || fail "insert: additions before section"
+assert_contains "insert: section kept" "$_tid_out" "[sec.xml]"
+unset _tgt
+
+# ---------- json raw reads: default profile only ----------
+bootstrap
+source_libs
+mk_module teesim "TEESimulator"
+mkdir -p "$TEESIM_DIR"
+printf '%s\n' '{"version":1,"profiles":{"default":{"keybox":"keybox.xml","mode":"patch","patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"YYYY-MM-05"},"osVersion":"","brand":"","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.google.android.gms"]},"work":{"keybox":"keybox.xml","mode":"patch","patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"YYYY-MM-05"},"osVersion":"","brand":"","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.eltavine.duckdetector"]}}}' > "$TEESIM_CONFIG"
+detect_keystore_manager
+_kt_raw=$(ksm_read_targets_raw)
+assert_contains "json raw: default app" "$_kt_raw" "com.google.android.gms"
+assert_not_contains "json raw: other profile excluded" "$_kt_raw" "com.eltavine.duckdetector"
+_kt_all=$(ksm_read_targets)
+assert_contains "json all: other profile counted" "$_kt_all" "com.eltavine.duckdetector"
 
 done_testing

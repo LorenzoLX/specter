@@ -44,6 +44,8 @@ done < "$TEMP_LIST"
 
 _STAGING="$SPECTER_DIR/.auto_target_staging.$$"
 ksm_read_targets_raw > "$_STAGING" 2>/dev/null || : > "$_STAGING"
+_ADDS="$SPECTER_DIR/.auto_target_adds.$$"
+: > "$_ADDS"
 
 if [ -n "$_new_pkgs" ]; then
   _default_mode=$(cfg_get target_default_mode "bare")
@@ -55,7 +57,7 @@ if [ -n "$_new_pkgs" ]; then
   _added=0
   while IFS= read -r _pkg; do
     [ -z "$_pkg" ] && continue
-    echo "${_pkg}${_suffix}" >> "$_STAGING"
+    echo "${_pkg}${_suffix}" >> "$_ADDS"
     _added=$((_added + 1))
   done <<EOF
 $_new_pkgs
@@ -101,12 +103,13 @@ while IFS= read -r _line || [ -n "$_line" ]; do
   fi
 done < "$_STAGING"
 
+_txt_insert_default "$_TMP_CLEAN" "$_ADDS"
 ksm_commit_targets "$_TMP_CLEAN"
 [ "$_cleaned" -gt 0 ] && log_i "AUTO_TARGET" "Removed $_cleaned stale/blacklisted entry(s)"
 
 unset _installed_list _bl_set _cleaned _fixed _keep _base
 
 cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
-rm -f "$TEMP_LIST" "$_EXISTING" "$_STAGING" "$_SEEN"
+rm -f "$TEMP_LIST" "$_EXISTING" "$_STAGING" "$_SEEN" "$_TMP_CLEAN" "$_ADDS"
 log_i "AUTO_TARGET" "Auto-target scan complete"
 exit 0
