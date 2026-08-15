@@ -104,8 +104,6 @@ source_libs() {
   # whichever TEST_ROOT was active the first time source_libs ran.
   TARGET_FILE="$TRICKY_DIR/keybox.xml"
   BACKUP_FILE="$SPECTER_DIR/backup/keybox.xml.bak"
-  LOCKED_FILE="$TRICKY_DIR/locked.xml"
-  LOCKED_BACKUP="$SPECTER_DIR/backup/locked.xml.bak"
   TARGET_TXT="$TRICKY_DIR/target.txt"
   SECURITY_PATCH_FILE="$TRICKY_DIR/security_patch.txt"
   BACKUP_DIR="$SPECTER_DIR/backup"

@@ -57,7 +57,6 @@ detect_keystore_manager() {
       KSM_KEYBOX="$TARGET_FILE"
       KSM_TARGETS="$TARGET_TXT"
       KSM_SECURITY="$SECURITY_PATCH_FILE"
-      KSM_LOCKED="$LOCKED_FILE"
       KSM_FORMAT="txt"
       ;;
     teesim)
@@ -67,7 +66,6 @@ detect_keystore_manager() {
       KSM_KEYBOX="$TEESIM_KEYBOX"
       KSM_TARGETS="$TEESIM_CONFIG"
       KSM_SECURITY="$TEESIM_CONFIG"
-      KSM_LOCKED=""
       KSM_FORMAT="json"
       ;;
     omk)
@@ -76,7 +74,6 @@ detect_keystore_manager() {
       KSM_KEYBOX="$OMK_KEYBOX"
       KSM_TARGETS="$OMK_INJECTOR"
       KSM_SECURITY="$OMK_CONFIG"
-      KSM_LOCKED=""
       KSM_FORMAT="toml"
       ;;
     *)

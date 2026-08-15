@@ -63,11 +63,3 @@ _teesim_prop() {
   module_detect "teesim"
 }
 
-# TrickyStore-layout TEESimulator / TEESimulator-RS only (locked.xml path).
-_is_teesimulator() {
-  case "$(_ts_prop)" in
-    *TEESimulator*) return 0 ;;
-  esac
-  [ -f "$TRICKY_DIR/spoof_build_vars" ] && return 0
-  return 1
-}
