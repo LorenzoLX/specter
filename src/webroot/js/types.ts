@@ -12,7 +12,7 @@ export interface InfoJson { android?: string; kernel?: string; root?: string; ro
 
 export interface KeyboxInfoJson { installed: boolean; source?: string; source_version?: string; text?: string; up_to_date?: boolean; revoked?: boolean; softbanned?: boolean; serial?: string; is_private?: boolean; }
 
-export interface KeystoreManagerJson { id: string; name?: string; format?: string; dir?: string; targets?: string; security?: string; }
+export interface KeystoreManagerJson { id: string; name?: string; format?: string; dir?: string; targets?: string; config?: string; perAppModes?: boolean; }
 
 export interface DevEntry { name: string; role: string; github: string; avatar: string; }
 

@@ -277,7 +277,8 @@ if (typeof window.ksu === 'undefined') {
         format: 'toml',
         dir: '/data/misc/keystore/omk',
         targets: '/data/misc/keystore/omk/injector.toml',
-        security: '/data/misc/keystore/omk/config.toml',
+        config: '/data/misc/keystore/omk/config.toml',
+        perAppModes: false,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     }
 

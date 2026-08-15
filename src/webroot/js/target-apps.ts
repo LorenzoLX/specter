@@ -718,14 +718,18 @@ export async function openTargetAppsManager() {
       if (typeof ksu?.cacheAllPackageIcons === 'function') {
         try { ksu.cacheAllPackageIcons(48); } catch {}
       }
+      let perAppModes: boolean | undefined;
       try {
         const km = await fetchJson<KeystoreManagerJson>(API_URLS.KEYSTORE_MANAGER!, 0);
         const fmt = km?.format || '';
         ksmFormat = fmt === 'json' || fmt === 'toml' || fmt === 'txt' ? fmt : 'txt';
+        perAppModes = km?.perAppModes;
       } catch {
         ksmFormat = 'txt';
       }
-      supportsPerAppMode = ksmFormat === 'txt';
+      // Contract flag from keystore_manager.json; format sniff only as a
+      // fallback for stale info files written by older Specter versions.
+      supportsPerAppMode = perAppModes ?? (ksmFormat === 'txt');
       const modeItem = overlay.querySelector('#ta-mode') as HTMLElement | null;
       if (modeItem) {
         modeItem.hidden = ksmFormat === 'toml';
