@@ -18,6 +18,7 @@ mk_module tricky_store "Tricky Store"
 detect_keystore_manager
 assert_eq "detect: tricky_store" "trickystore" "$KSM"
 assert_eq "detect: format txt" "txt" "$KSM_FORMAT"
+assert_eq "detect: txt per-app modes" "1" "$KSM_PER_APP_MODES"
 
 bootstrap
 source_libs
@@ -25,6 +26,7 @@ mk_module oh_my_keymint "OhMyKeymint"
 detect_keystore_manager
 assert_eq "detect: omk" "omk" "$KSM"
 assert_eq "detect: format toml" "toml" "$KSM_FORMAT"
+assert_eq "detect: toml per-app modes" "0" "$KSM_PER_APP_MODES"
 
 bootstrap
 source_libs
@@ -33,6 +35,7 @@ mkdir -p "$TEESIM_DIR"
 detect_keystore_manager
 assert_eq "detect: teesim" "teesim" "$KSM"
 assert_eq "detect: format json" "json" "$KSM_FORMAT"
+assert_eq "detect: json per-app modes" "0" "$KSM_PER_APP_MODES"
 
 bootstrap
 source_libs
@@ -162,9 +165,9 @@ mk_module tricky_store "Tricky Store"
 detect_keystore_manager
 set_prop "ro.vendor.build.security_patch" "2026-06-01"
 ksm_set_security_patch "2026-06-05"
-assert_contains "patch txt: system" "$(cat "$KSM_SECURITY")" "system=202606"
-assert_contains "patch txt: boot" "$(cat "$KSM_SECURITY")" "boot=2026-06-05"
-assert_contains "patch txt: vendor" "$(cat "$KSM_SECURITY")" "vendor=2026-06-01"
+assert_contains "patch txt: system" "$(cat "$KSM_CONFIG")" "system=202606"
+assert_contains "patch txt: boot" "$(cat "$KSM_CONFIG")" "boot=2026-06-05"
+assert_contains "patch txt: vendor" "$(cat "$KSM_CONFIG")" "vendor=2026-06-01"
 assert_eq "patch get txt" "2026-06-05" "$(ksm_get_security_patch)"
 assert_file_not_exists "patch txt: no restart" "$OMK_RESTART_DIR/restart.all"
 
@@ -179,7 +182,7 @@ security_patch = "auto"
 EOF
 detect_keystore_manager
 ksm_set_security_patch "2026-06-05"
-assert_contains "patch toml: set" "$(cat "$KSM_SECURITY")" 'security_patch = "2026-06-05"'
+assert_contains "patch toml: set" "$(cat "$KSM_CONFIG")" 'security_patch = "2026-06-05"'
 assert_eq "patch get toml" "2026-06-05" "$(ksm_get_security_patch)"
 assert_file_not_exists "patch toml: no restart" "$OMK_RESTART_DIR/restart.keymint"
 
@@ -192,7 +195,7 @@ printf 'ro.build.version.security_patch=2026-10-05\n' > "$TEST_ROOT/system/build
 export SPECTER_SYSTEM_BUILD_PROP="$TEST_ROOT/system/build.prop"
 detect_keystore_manager
 SPECTER_FIRST_BOOT=1 run_feature security_patch.sh >/dev/null
-assert_contains "first boot: device applied" "$(cat "$KSM_SECURITY")" "boot=2026-10-05"
+assert_contains "first boot: device applied" "$(cat "$KSM_CONFIG")" "boot=2026-10-05"
 
 bootstrap
 source_libs
@@ -416,7 +419,7 @@ bootstrap
 source_libs
 mk_module tricky_store "Tricky Store"
 detect_keystore_manager
-cat > "$KSM_SECURITY" << 'EOF'
+cat > "$KSM_CONFIG" << 'EOF'
 system=202605
 boot=2026-05-05
 vendor=2026-05-01
@@ -426,7 +429,7 @@ system=202501
 EOF
 set_prop "ro.vendor.build.security_patch" "2026-06-01"
 ksm_set_security_patch "2026-06-05"
-_sp_out=$(cat "$KSM_SECURITY")
+_sp_out=$(cat "$KSM_CONFIG")
 assert_contains "patch txt: section kept" "$_sp_out" "[com.example.app]"
 assert_contains "patch txt: section boot kept" "$_sp_out" "boot=2025-01-01"
 assert_contains "patch txt: global boot replaced" "$_sp_out" "boot=2026-06-05"
@@ -436,7 +439,7 @@ bootstrap
 source_libs
 mk_module tricky_store "Tricky Store"
 detect_keystore_manager
-cat > "$KSM_SECURITY" << 'EOF'
+cat > "$KSM_CONFIG" << 'EOF'
 [com.example.app]
 boot=2025-01-01
 EOF

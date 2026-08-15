@@ -48,12 +48,16 @@ _ADDS="$SPECTER_DIR/.auto_target_adds.$$"
 : > "$_ADDS"
 
 if [ -n "$_new_pkgs" ]; then
-  _default_mode=$(cfg_get target_default_mode "bare")
-  case "$_default_mode" in
-    "force") _suffix="!" ;;
-    "conditional") _suffix="?" ;;
-    *) _suffix="" ;;
-  esac
+  _suffix=""
+  if [ "$KSM_PER_APP_MODES" = "1" ]; then
+    _default_mode=$(cfg_get target_default_mode "bare")
+    case "$_default_mode" in
+      "force") _suffix="!" ;;
+      "conditional") _suffix="?" ;;
+      *) _suffix="" ;;
+    esac
+    unset _default_mode
+  fi
   _added=0
   while IFS= read -r _pkg; do
     [ -z "$_pkg" ] && continue
@@ -62,7 +66,7 @@ if [ -n "$_new_pkgs" ]; then
   done <<EOF
 $_new_pkgs
 EOF
-  unset _default_mode _suffix
+  unset _suffix
   log_i "AUTO_TARGET" "Added $_added new package(s)"
 fi
 

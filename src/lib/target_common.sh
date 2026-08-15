@@ -87,6 +87,9 @@ _append_missing() {
 _compute_suffix() {
   _pkg="$1"
   _suffix="" _custom_matched=false
+  # Suffixes are only meaningful when the backend supports per-app modes
+  # (txt); json/toml get them stripped on commit anyway.
+  [ "$KSM_PER_APP_MODES" = "1" ] || return 0
   if [ "$_customize_mode" = "selective" ]; then
     _match=$(grep -E "^${_pkg}[!?]?$" "$_customize" 2>/dev/null | head -1)
     if [ -n "$_match" ]; then

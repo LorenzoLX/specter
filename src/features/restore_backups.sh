@@ -46,8 +46,8 @@ case "$KSM_FORMAT" in
       log_i "RESTORE" "Restored target.txt"
       _restored=$((_restored + 1))
     fi
-    if [ -f "$BACKUP_DIR/security_patch.txt.bak" ] && [ -n "$KSM_SECURITY" ]; then
-      cp "$BACKUP_DIR/security_patch.txt.bak" "$KSM_SECURITY"
+    if [ -f "$BACKUP_DIR/security_patch.txt.bak" ] && [ -n "$KSM_CONFIG" ]; then
+      cp "$BACKUP_DIR/security_patch.txt.bak" "$KSM_CONFIG"
       log_i "RESTORE" "Restored security_patch.txt"
       _restored=$((_restored + 1))
     fi

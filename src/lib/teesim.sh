@@ -1,6 +1,30 @@
 # shellcheck shell=sh
-# JingMatrix TEESimulator — profiles.default in config.json via IR (awk; shell was too slow):
-#   P id | K keybox | M mode | O osVersion | S/V/B patch | I field val | A pkg
+# JingMatrix TEESimulator — profiles.default in config.json edited via an
+# intermediate representation (IR), because sed-on-JSON is not a thing.
+#
+# IR grammar (one record per line, fields separated by spaces):
+#   P <id>        profile header; ends the previous profile's record list
+#   K <file>      keybox file for the profile
+#   M <mode>      mode: patch | generation
+#   O <value>     osVersion
+#   S <value>     patchLevel.system
+#   V <value>     patchLevel.vendor
+#   B <value>     patchLevel.boot
+#   I <field> <v> identity field: brand|device|product|manufacturer|model|
+#                 serial|imei|meid|imei2
+#   A <pkg>       one entry of the profile's apps list
+#
+# Invariants:
+#   - _teesim_to_ir    config.json → IR; tokenizer drops comments/whitespace
+#                      but the file itself is not modified (reads are pure)
+#   - _teesim_from_ir  IR → config.json; profiles without apps are dropped,
+#                      missing fields fall back to profile defaults
+#   - _teesim_load_ir  read + repair (seeds a default profile from
+#                      config.default.json, appends one when missing); only
+#                      write paths use it — readers use _teesim_to_ir
+#   - Specter manages ONLY the "default" profile: _teesim_commit_apps,
+#     _teesim_set_patch, _teesim_set_mode and _teesim_ensure_keybox_field
+#     all scope their edits to it; other profiles pass through untouched
 
 _teesim_to_ir() {
   _tti_file="$1"

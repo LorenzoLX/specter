@@ -1,5 +1,19 @@
 # shellcheck shell=sh
 # Enabled backends only: teesim → Tricky Store / TEESimulator-RS → OMK.
+#
+# Keystore manager contract (set by detect_keystore_manager):
+#   KSM              backend id: teesim | trickystore | omk | none
+#   KSM_NAME         display name from the module's module.prop
+#   KSM_DIR          the backend's data directory
+#   KSM_KEYBOX       keybox file
+#   KSM_TARGETS      target/app list file
+#   KSM_CONFIG       main config file: security patch level lives here; for
+#                    toml also the trust fields, for json also the profiles
+#   KSM_FORMAT       file format of targets/config: txt | json | toml
+#   KSM_PER_APP_MODES  1 when per-app !/? suffixes are meaningful (txt only)
+#
+# Feature scripts and the WebUI consume only this contract; nothing outside
+# this file (plus the per-format helpers) knows backend-specific paths.
 
 _ksm_auto_pick() {
   if module_enabled teesim >/dev/null; then
@@ -56,8 +70,9 @@ detect_keystore_manager() {
       KSM_DIR="$TRICKY_DIR"
       KSM_KEYBOX="$TARGET_FILE"
       KSM_TARGETS="$TARGET_TXT"
-      KSM_SECURITY="$SECURITY_PATCH_FILE"
+      KSM_CONFIG="$SECURITY_PATCH_FILE"
       KSM_FORMAT="txt"
+      KSM_PER_APP_MODES=1
       ;;
     teesim)
       KSM_NAME=$(_teesim_prop)
@@ -65,28 +80,31 @@ detect_keystore_manager() {
       KSM_DIR="$TEESIM_DIR"
       KSM_KEYBOX="$TEESIM_KEYBOX"
       KSM_TARGETS="$TEESIM_CONFIG"
-      KSM_SECURITY="$TEESIM_CONFIG"
+      KSM_CONFIG="$TEESIM_CONFIG"
       KSM_FORMAT="json"
+      KSM_PER_APP_MODES=0
       ;;
     omk)
       KSM_NAME="OhMyKeymint"
       KSM_DIR="$OMK_DIR"
       KSM_KEYBOX="$OMK_KEYBOX"
       KSM_TARGETS="$OMK_INJECTOR"
-      KSM_SECURITY="$OMK_CONFIG"
+      KSM_CONFIG="$OMK_CONFIG"
       KSM_FORMAT="toml"
+      KSM_PER_APP_MODES=0
       ;;
     *)
       KSM_NAME=""
       KSM_DIR=""
       KSM_KEYBOX=""
       KSM_TARGETS=""
-      KSM_SECURITY=""
+      KSM_CONFIG=""
       KSM_FORMAT=""
+      KSM_PER_APP_MODES=0
       ;;
   esac
 
-  export KSM KSM_NAME KSM_DIR KSM_KEYBOX KSM_TARGETS KSM_SECURITY KSM_FORMAT
+  export KSM KSM_NAME KSM_DIR KSM_KEYBOX KSM_TARGETS KSM_CONFIG KSM_FORMAT KSM_PER_APP_MODES
   unset _dkm_override
 }
 
@@ -314,24 +332,24 @@ _ksm_wait_file() {
 ksm_get_security_patch() {
   case "$KSM_FORMAT" in
     json)
-      _teesim_get_boot_patch "$KSM_SECURITY"
+      _teesim_get_boot_patch "$KSM_CONFIG"
       ;;
     toml)
-      [ -f "$KSM_SECURITY" ] || return 1
-      grep -E '^[ ]*security_patch[ ]*=' "$KSM_SECURITY" 2>/dev/null | head -1 |
+      [ -f "$KSM_CONFIG" ] || return 1
+      grep -E '^[ ]*security_patch[ ]*=' "$KSM_CONFIG" 2>/dev/null | head -1 |
         sed 's/.*=[ ]*"\([^"]*\)".*/\1/'
       ;;
     *)
-      [ -f "$KSM_SECURITY" ] || return 1
+      [ -f "$KSM_CONFIG" ] || return 1
       _kgsp=$(awk '
         /^[[:space:]]*\[/ { exit }
         /^[[:space:]]*boot=/ { sub(/^[[:space:]]*boot=/,""); sub(/[[:space:]]*$/,""); if ($0 != "") { print; exit } }
-      ' "$KSM_SECURITY") || _kgsp=""
+      ' "$KSM_CONFIG") || _kgsp=""
       if [ -z "$_kgsp" ]; then
         _kgsp=$(awk '
           /^[[:space:]]*\[/ { exit }
           /^[[:space:]]*all=/ { sub(/^[[:space:]]*all=/,""); sub(/[[:space:]]*$/,""); if ($0 != "") { print; exit } }
-        ' "$KSM_SECURITY") || _kgsp=""
+        ' "$KSM_CONFIG") || _kgsp=""
       fi
       [ -n "$_kgsp" ] || { unset _kgsp; return 1; }
       printf '%s\n' "$_kgsp"
@@ -344,18 +362,18 @@ ksm_set_security_patch() {
   _ksp_date="$1"
   case "$KSM_FORMAT" in
     json)
-      _teesim_set_patch "$KSM_SECURITY" "$_ksp_date" || {
+      _teesim_set_patch "$KSM_CONFIG" "$_ksp_date" || {
         unset _ksp_date
         return 1
       }
       ;;
     toml)
-      _ksm_wait_file "$KSM_SECURITY" 10 || {
+      _ksm_wait_file "$KSM_CONFIG" 10 || {
         log_w "KSM" "OMK config.toml not available yet, skip security patch"
         unset _ksp_date
         return 1
       }
-      _toml_set_trust_key "$KSM_SECURITY" "security_patch" "\"$_ksp_date\"" || {
+      _toml_set_trust_key "$KSM_CONFIG" "security_patch" "\"$_ksp_date\"" || {
         unset _ksp_date
         return 1
       }
@@ -368,23 +386,23 @@ ksm_set_security_patch() {
       fi
       [ -n "$_ksp_vendor" ] || _ksp_vendor="$_ksp_date"
       _ksp_yyyymm=$(printf '%s' "$_ksp_date" | cut -d'-' -f1-2 | tr -d '-')
-      _ksp_tmp="${KSM_SECURITY}.new.$$"
+      _ksp_tmp="${KSM_CONFIG}.new.$$"
       {
         printf 'system=%s\nboot=%s\nvendor=%s\n' "$_ksp_yyyymm" "$_ksp_date" "$_ksp_vendor"
-        if [ -f "$KSM_SECURITY" ]; then
+        if [ -f "$KSM_CONFIG" ]; then
           # Keep per-package [pkg] sections and their contents untouched.
-          awk '/^[[:space:]]*\[/ { emit = 1 } emit { print }' "$KSM_SECURITY"
+          awk '/^[[:space:]]*\[/ { emit = 1 } emit { print }' "$KSM_CONFIG"
         fi
       } > "$_ksp_tmp"
-      if [ -f "$KSM_SECURITY" ]; then
-        _ksm_inplace_from "$_ksp_tmp" "$KSM_SECURITY" || {
+      if [ -f "$KSM_CONFIG" ]; then
+        _ksm_inplace_from "$_ksp_tmp" "$KSM_CONFIG" || {
           rm -f "$_ksp_tmp"
           unset _ksp_date _ksp_vendor _ksp_yyyymm _ksp_tmp
           return 1
         }
         rm -f "$_ksp_tmp"
       else
-        mv -f "$_ksp_tmp" "$KSM_SECURITY" || {
+        mv -f "$_ksp_tmp" "$KSM_CONFIG" || {
           rm -f "$_ksp_tmp"
           unset _ksp_date _ksp_vendor _ksp_yyyymm _ksp_tmp
           return 1
@@ -413,7 +431,7 @@ ksm_set_mode() {
 ksm_get_trust_field() {
   _kgt_key="$1"
   case "$KSM_FORMAT" in
-    toml) _toml_get_trust_key "$KSM_SECURITY" "$_kgt_key" ;;
+    toml) _toml_get_trust_key "$KSM_CONFIG" "$_kgt_key" ;;
     *) printf '' ;;
   esac
   unset _kgt_key
@@ -423,17 +441,17 @@ ksm_set_trust_field() {
   _kst_key="$1" _kst_val="$2"
   case "$KSM_FORMAT" in
     toml)
-      _ksm_wait_file "$KSM_SECURITY" 10 || {
+      _ksm_wait_file "$KSM_CONFIG" 10 || {
         log_w "KSM" "OMK config.toml not available yet, skip trust field"
         unset _kst_key _kst_val
         return 1
       }
       case "$_kst_key" in
         os_version)
-          _toml_set_trust_key "$KSM_SECURITY" "os_version" "$_kst_val"
+          _toml_set_trust_key "$KSM_CONFIG" "os_version" "$_kst_val"
           ;;
         vb_key|vb_hash)
-          _toml_set_trust_key "$KSM_SECURITY" "$_kst_key" "\"$_kst_val\""
+          _toml_set_trust_key "$KSM_CONFIG" "$_kst_key" "\"$_kst_val\""
           ;;
       esac
       ksm_reload
