@@ -1,3 +1,34 @@
+# v1.4.5
+
+**New**
+- JingMatrix TEESimulator 4.0 backend: profile config.json, patch/generation mode, operation mode dialog
+- Preferred PIF devices: choose Pixel Canary models or import custom props; preferred apply beats random fallback
+- OhMyKeymint: `auto`/`latest` security patch tokens, split keymint/injector restart tools
+- French + Indonesian translations (Turkish updated)
+
+**Changed**
+- Keystore management prefers TEESimulator over the Tricky Store family
+- Singleton enforcement considers enabled modules only
+- Keystore contract: `KSM_CONFIG` + per-app mode capability; WebUI reads it instead of sniffing the format
+- Removed legacy locked.xml generation and the TEESimulator serial-lock path (no backend reads it anymore)
+- Target writes preserve `[name.xml]` keybox scoping sections and non-default TEESimulator profiles
+- Security patch writes keep per-package `[pkg]` sections; reads use the global context only
+- OMK trust/patch writes wait for config.toml instead of failing during boot race
+- Custom ROM props exposed in ROM Cleaner
+- auto_target/desc: deduplicated target list so app count stays honest
+
+**Fixed**
+- App Targeting dropping FIXED_TARGETS and bypassing the active keystore backend (#74)
+- TEESimulator mode dialog overwriting a quick selection
+- Keybox status not written on catalog miss, UI not refreshing (#68)
+- Spoofed device orphan PIF entry (#62)
+- Terminal copy/clear translations (#66), "show less" for non-English home events (#65)
+- Missing OMK translation keys in ru.json
+- App targeting list scroll
+
+**Infrastructure**
+- 262 shell assertions, 94 TS tests
+
 # v1.4.4-17
 
 **New**
