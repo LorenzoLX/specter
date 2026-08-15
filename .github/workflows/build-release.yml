@@ -44,8 +44,7 @@ jobs:
             echo "Tag ($TAG) does not match module.prop version ($BASE_VER)"
             exit 1
           fi
-          HASH=$(git rev-parse --short=7 HEAD)
-          FULL_VERSION="${BASE_VER}-${BUILD}-g${HASH}"
+          FULL_VERSION="v${BASE_VER}"
           MAJOR=$(echo "$BASE_VER" | cut -d. -f1)
           MINOR=$(echo "$BASE_VER" | cut -d. -f2)
           PATCH=$(echo "$BASE_VER" | cut -d. -f3)
@@ -195,7 +194,7 @@ jobs:
       - name: Update update.json
         run: |
           ZIP_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/Specter-${{ steps.version.outputs.version }}.zip"
-          jq --arg v "${{ steps.version.outputs.base_version }}" \
+          jq --arg v "${{ steps.version.outputs.version }}" \
              --argjson vc "${{ steps.version.outputs.version_code }}" \
              --arg url "$ZIP_URL" \
              '.version = $v | .versionCode = $vc | .zipUrl = $url' \
