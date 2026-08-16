@@ -10,6 +10,7 @@
 
 **Changed**
 - Keystore management prefers TEESimulator over the Tricky Store family
+- Action pipeline security patch step defaults off
 - Singleton enforcement considers enabled modules only
 - Keystore contract: `KSM_CONFIG` + per-app mode capability; WebUI reads it instead of sniffing the format
 - Removed legacy locked.xml generation and the TEESimulator serial-lock path (no backend reads it anymore)

@@ -56,7 +56,7 @@ for _tk_pair in toggle_prop_handler:1 toggle_boot_state_props:1 toggle_bootmode_
                 toggle_rom_fingerprint_names:1 toggle_rom_fingerprint_prefix:1 \
                 toggle_rom_fingerprint_build_type:1 \
                 toggle_action_gms:1 toggle_action_target:1 \
-                toggle_action_security_patch:1 toggle_action_pif:1 toggle_action_keybox:1 \
+                toggle_action_security_patch:0 toggle_action_pif:1 toggle_action_keybox:1 \
                 toggle_action_security_patch_device:1 toggle_action_security_patch_bulletin:1 \
                 toggle_action_security_patch_synthetic:1 \
                 toggle_action_gms_force_stop:1 toggle_action_gms_clear_data:1 \
