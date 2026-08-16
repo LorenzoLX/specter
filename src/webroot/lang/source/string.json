@@ -405,5 +405,6 @@
   "tools_restart_omk_keymint_desc": "Use after changing OMK OS version or boot key.",
   "tools_restart_omk_injector": "Restart OMK injector",
   "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app.",
-  "tools_support_section": "Support"
+  "tools_support_section": "Support",
+  "home_keystore_backend": "Keystore Backend"
 }

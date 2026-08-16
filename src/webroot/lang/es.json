@@ -405,5 +405,6 @@
   "tools_restart_omk_injector": "Reiniciar injector OMK",
   "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app.",
   "menu_pif_choose_current_many": "Actual: {0} dispositivos",
-  "menu_pif_choose_multi_hint": "Selecciona uno o más dispositivos. Ninguno = aleatorio."
+  "menu_pif_choose_multi_hint": "Selecciona uno o más dispositivos. Ninguno = aleatorio.",
+  "home_keystore_backend": "Backend de Keystore"
 }

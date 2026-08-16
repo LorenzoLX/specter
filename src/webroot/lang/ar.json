@@ -405,5 +405,6 @@
   "tools_restart_omk_injector": "إعادة تشغيل injector OMK",
   "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app.",
   "menu_pif_choose_current_many": "الحالي: {0} أجهزة",
-  "menu_pif_choose_multi_hint": "حدد جهازًا واحدًا أو أكثر. بلا تحديد = عشوائي."
+  "menu_pif_choose_multi_hint": "حدد جهازًا واحدًا أو أكثر. بلا تحديد = عشوائي.",
+  "home_keystore_backend": "مخزن المفاتيح"
 }

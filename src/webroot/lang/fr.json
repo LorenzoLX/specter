@@ -405,5 +405,6 @@
   "tools_restart_omk_keymint_desc": "Exécuter après un changement dans OMK de version d'Android ou de clé de démarrage",
   "tools_restart_omk_injector": "Redémarrage de l'injecteur d'OMK",
   "tools_restart_omk_injector_desc": "Exécuter en cas de modification de ciblage d'application non prise en compte, puis ouvrir de nouveau l'application",
-  "tools_support_section": "Assistance"
+  "tools_support_section": "Assistance",
+  "home_keystore_backend": "Backend Keystore"
 }

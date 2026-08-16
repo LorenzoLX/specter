@@ -405,5 +405,6 @@
   "tools_restart_omk_injector": "重启 OMK injector",
   "tools_restart_omk_injector_desc": "Use if a target-app change didn't stick; then reopen the app.",
   "menu_pif_choose_current_many": "当前：{0} 台设备",
-  "menu_pif_choose_multi_hint": "可多选设备。不选 = 随机。"
+  "menu_pif_choose_multi_hint": "可多选设备。不选 = 随机。",
+  "home_keystore_backend": "Keystore 后端"
 }

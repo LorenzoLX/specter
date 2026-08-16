@@ -405,5 +405,6 @@
   "tools_restart_omk_injector": "OMK enjektörünü yeniden başlat",
   "tools_restart_omk_injector_desc": "Hedef uygulamada yapılan değişiklik kalıcı olmazsa bu yöntemi kullanın; ardından uygulamayı yeniden açın.",
   "menu_pif_choose_current_many": "Geçerli: {0} cihaz",
-  "menu_pif_choose_multi_hint": "Bir veya birden fazla cihaz seçin. Seçmezseniz rastgele seçilecektir."
+  "menu_pif_choose_multi_hint": "Bir veya birden fazla cihaz seçin. Seçmezseniz rastgele seçilecektir.",
+  "home_keystore_backend": "Keystore Backend"
 }

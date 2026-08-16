@@ -405,5 +405,6 @@
   "tools_restart_omk_injector": "Mulai Ulang Injector OMK",
   "tools_restart_omk_injector_desc": "Gunakan jika perubahan target aplikasi tidak diterapkan; lalu buka kembali aplikasi.",
   "menu_pif_choose_current_many": "Saat ini: {0} perangkat",
-  "menu_pif_choose_multi_hint": "Pilih satu atau lebih perangkat. Tidak ada = acak."
+  "menu_pif_choose_multi_hint": "Pilih satu atau lebih perangkat. Tidak ada = acak.",
+  "home_keystore_backend": "Backend Keystore"
 }

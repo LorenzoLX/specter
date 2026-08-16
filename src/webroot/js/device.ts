@@ -68,6 +68,10 @@ function applyKeystoreManager(data: KeystoreManagerJson) {
     const el = document.getElementById(id);
     if (el) el.hidden = !show;
   }
+  const backendEl = document.getElementById('sp-backend');
+  if (backendEl) {
+    backendEl.textContent = data.name || (data.id && data.id !== 'none' ? data.id : (getTranslation('device_not_installed') || 'Not Installed'));
+  }
 }
 
 function applyAllDeviceInfo(data: InfoJson) {
