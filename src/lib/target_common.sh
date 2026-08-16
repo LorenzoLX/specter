@@ -76,6 +76,18 @@ _append_missing() {
   unset _am_line _am_base
 }
 
+# Filter $1 (a package list file) against the blacklist when enabled.
+_filter_blacklist() {
+  _fb_file="$1"
+  [ -f "$SPECTER_DIR/blacklist_enabled" ] && [ -s "$BLACKLIST" ] || { unset _fb_file; return 0; }
+  if grep -Fvxf "$BLACKLIST" "$_fb_file" > "${_fb_file}.filtered" 2>/dev/null; then
+    mv "${_fb_file}.filtered" "$_fb_file"
+  else
+    log_w "TARGET" "Blacklist filtering failed"
+  fi
+  unset _fb_file
+}
+
 # Compute suffix for a given package based on customize.txt and TEE status
 # Sets $_suffix and $_custom_matched
 _compute_suffix() {

@@ -101,13 +101,7 @@ case "${1}" in
     }
     if [ -n "$pkgs" ]; then
       echo "$pkgs" | cut -d ":" -f 2 > "$TEMP_PKGS"
-      if [ -f "$SPECTER_DIR/blacklist_enabled" ] && [ -s "$BLACKLIST" ]; then
-        if grep -Fvxf "$BLACKLIST" "$TEMP_PKGS" > "${TEMP_PKGS}.filtered" 2>/dev/null; then
-          mv "${TEMP_PKGS}.filtered" "$TEMP_PKGS"
-        else
-          log_w "TARGET" "Blacklist filtering failed"
-        fi
-      fi
+      _filter_blacklist "$TEMP_PKGS"
 
       while read -r pkg; do
         [ -z "$pkg" ] && continue
@@ -137,13 +131,7 @@ case "${1}" in
     }
     if [ -n "$pkgs" ]; then
       echo "$pkgs" | cut -d ":" -f 2 > "$TEMP_PKGS"
-      if [ -f "$SPECTER_DIR/blacklist_enabled" ] && [ -s "$BLACKLIST" ]; then
-        if grep -Fvxf "$BLACKLIST" "$TEMP_PKGS" > "${TEMP_PKGS}.filtered" 2>/dev/null; then
-          mv "${TEMP_PKGS}.filtered" "$TEMP_PKGS"
-        else
-          log_w "TARGET" "Blacklist filtering failed"
-        fi
-      fi
+      _filter_blacklist "$TEMP_PKGS"
 
       while read -r pkg; do
         [ -z "$pkg" ] && continue
