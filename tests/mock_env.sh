@@ -91,6 +91,8 @@ source_libs() {
   . "$REPO_ROOT/src/lib/props.sh" 2>/dev/null
   . "$REPO_ROOT/src/lib/keybox.sh" 2>/dev/null
   . "$REPO_ROOT/src/lib/teesim.sh" 2>/dev/null
+  . "$REPO_ROOT/src/lib/keystore_toml.sh" 2>/dev/null
+  . "$REPO_ROOT/src/lib/keystore_txt.sh" 2>/dev/null
   . "$REPO_ROOT/src/lib/keystore.sh" 2>/dev/null
   . "$REPO_ROOT/src/lib/conflicts.sh" 2>/dev/null
   SPECTER_DIR="$TEST_ROOT/specter"
