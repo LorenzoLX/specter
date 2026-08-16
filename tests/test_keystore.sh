@@ -497,4 +497,32 @@ assert_not_contains "json raw: other profile excluded" "$_kt_raw" "com.eltavine.
 _kt_all=$(ksm_read_targets)
 assert_contains "json all: other profile counted" "$_kt_all" "com.eltavine.duckdetector"
 
+# ---------- teesim lossless round-trip: unknown fields, tokens, patch tokens ----------
+bootstrap
+source_libs
+mk_module teesim "TEESimulator"
+mkdir -p "$TEESIM_DIR"
+printf '%s\n' '{"version":1,"note":"keep-me","profiles":{"default":{"keybox":"keybox.xml","mode":"patch","autoIncludeNewApps":true,"patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"today"},"osVersion":"16","brand":"google","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.google.android.gms","uid:10123","com.work.app@10"]},"work":{"keybox":"keybox.xml","mode":"generation","autoIncludeNewApps":false,"patchLevel":{"system":"today","vendor":"YYYY-MM-05","boot":"no"},"osVersion":"","brand":"","device":"","product":"","manufacturer":"","model":"","serial":"","imei":"","meid":"","imei2":"","apps":["com.eltavine.duckdetector"]}}}' > "$TEESIM_CONFIG"
+detect_keystore_manager
+assert_eq "lossless: boot token read" "today" "$(ksm_get_security_patch)"
+printf 'com.google.android.gms\nandroid\ncom.new.app\n' > "$TEST_ROOT/staging_lossless.txt"
+ksm_commit_targets "$TEST_ROOT/staging_lossless.txt"
+_cfg=$(cat "$TEESIM_CONFIG")
+assert_contains "lossless: uid token kept" "$_cfg" '"uid:10123"'
+assert_contains "lossless: user token kept" "$_cfg" '"com.work.app@10"'
+assert_contains "lossless: autoInclude kept" "$_cfg" '"autoIncludeNewApps": true'
+assert_contains "lossless: other profile flag kept" "$_cfg" '"autoIncludeNewApps": false'
+assert_contains "lossless: top-level kept" "$_cfg" '"note": "keep-me"'
+assert_contains "lossless: other profile kept" "$_cfg" '"work"'
+assert_contains "lossless: new app on default" "$_cfg" "com.new.app"
+ksm_set_security_patch "2026-07-05"
+_cfg2=$(cat "$TEESIM_CONFIG")
+assert_contains "lossless: default boot set" "$_cfg2" '"boot": "2026-07-05"'
+assert_contains "lossless: work boot token kept" "$_cfg2" '"boot": "no"'
+assert_contains "lossless: flag after patch" "$_cfg2" '"autoIncludeNewApps": true'
+_raw=$(ksm_read_targets_raw)
+assert_not_contains "lossless: raw hides uid token" "$_raw" "uid:10123"
+assert_not_contains "lossless: raw hides user token" "$_raw" "com.work.app@10"
+assert_contains "lossless: raw shows pkg" "$_raw" "com.new.app"
+
 done_testing

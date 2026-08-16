@@ -46,6 +46,12 @@ _is_intentional_spoofed_patch() {
         auto|latest) return 0 ;;
       esac
       ;;
+    json)
+      # TEESimulator WebUI patch tokens — never clobber them.
+      case "$1" in
+        today|no|harvested|system_property) return 0 ;;
+      esac
+      ;;
   esac
   return 1
 }

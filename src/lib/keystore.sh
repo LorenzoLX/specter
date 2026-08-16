@@ -163,7 +163,9 @@ ksm_read_targets() {
 
 ksm_read_targets_raw() {
   case "$KSM_FORMAT" in
-    json) _teesim_read_apps "$KSM_TARGETS" default ;;
+    # UI-facing list: package names only — uid:/pkg@user tokens are the
+    # TEESimulator WebUI's concern and are preserved on commit regardless.
+    json) _teesim_read_apps "$KSM_TARGETS" default | grep -vE '^(uid:[0-9]+|[^[:space:]]+@[0-9]+)$' ;;
     toml) ksm_read_targets ;;
     *) [ -f "$KSM_TARGETS" ] && cat "$KSM_TARGETS" ;;
   esac
