@@ -8,7 +8,7 @@ export interface KsuBridge {
 
 export interface ModulePaths { MODDIR: string; SPECTER_DIR?: string; }
 
-export interface InfoJson { android?: string; kernel?: string; root?: string; root_sol?: string; version?: string; tee_status?: string; tee_tier?: number; security_patch?: string; build_patch?: string; pif_model?: string; }
+export interface InfoJson { android?: string; kernel?: string; root?: string; root_sol?: string; version?: string; security_patch?: string; build_patch?: string; pif_model?: string; }
 
 export interface KeyboxInfoJson { installed: boolean; source?: string; source_version?: string; text?: string; up_to_date?: boolean; revoked?: boolean; softbanned?: boolean; serial?: string; is_private?: boolean; }
 

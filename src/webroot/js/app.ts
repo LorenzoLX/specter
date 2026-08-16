@@ -73,8 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   import('./gms-ui.js').then(m => m.wireGms()).catch(() => {});
   import('./action-security-patch-ui.js').then(m => m.wireActionSecurityPatch()).catch(() => {});
   import('./security-patch-ui.js').then(m => m.wireSecurityPatch()).catch(() => {});
-  import('./boot-hash-ui.js').then(m => m.wireBootHash()).catch(() => {});
-  import('./tee-bhash-ui.js').then(m => m.wireTeeHash()).catch(() => {});
   import('./omk-trust-ui.js').then(m => m.wireOmkTrust()).catch(() => {});
   import('./font.js').then(m => m.wireFontToggles()).catch(() => {});
 

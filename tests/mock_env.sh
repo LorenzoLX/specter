@@ -96,9 +96,6 @@ source_libs() {
   SPECTER_DIR="$TEST_ROOT/specter"
   GMS_PROPS_FILE="$TEST_ROOT/gms_certified_props.json"
   CONFLICT_BACKUP_FILE="$SPECTER_DIR/conflict_backups.txt"
-  VBMETA_DIGEST="$SPECTER_DIR/vbmeta_digest"
-  TEE_STATUS="$SPECTER_DIR/tee_status"
-  TEE_BHASH="$SPECTER_DIR/tee_hash"
   # constants.sh only sets these on first use (:=), so re-derive them from
   # the current TRICKY_DIR/OMK_DIR on every call — otherwise they stick to
   # whichever TEST_ROOT was active the first time source_libs ran.

@@ -42,9 +42,8 @@ Specter is a complete rewrite of what I originally built as Yurikey.
 
 - **Keybox**: multi-source catalog, custom keybox, Google revocation, backup/restore
 - **Auto Target**: inotify + polling for new apps
-- **App Targeting**: per-app states, TEE-aware suffixes, blacklist
+- **App Targeting**: per-app states, suffixes, blacklist
 - **Security Patch**: live fetch with offline fallback
-- **TEE & Boot Hash**: TEE status/tier, vbmeta digest, boot hash
 - **ROM Fingerprint**: cleans custom ROM props and prefixes
 - **ADB Disabler**: dev options, USB debugging, OEM unlock
 - **PIF**: auto-detect variant, fetch fingerprint, block spoof engines
@@ -125,7 +124,6 @@ Each `*.json` file is validated against `source/string.json` in CI (`npm test`).
 - [chiteroman](https://github.com/chiteroman/PlayIntegrityFix), [KOWX712](https://github.com/KOWX712/PlayIntegrityFix) and [osm0sis](https://github.com/osm0sis/PlayIntegrityFork). PIF and forks.
 - [5ec1cff](https://github.com/5ec1cff/TrickyStore), [JingMatrix](https://github.com/JingMatrix/TEESimulator), [Enginex0](https://github.com/Enginex0/TEESimulator-RS). Tricky Store and forks.
 - [KOWX712](https://github.com/KOWX712/Tricky-Addon-Update-Target-List), [Enginex0](https://github.com/Enginex0/tricky-addon-enhanced). Tricky Store Addon.
-- [vvb2060](https://github.com/vvb2060/KeyAttestation). KeyAttestation.
 - [eltavine](https://github.com/eltavine/Duck-Detector-Refactoring). Duck Detector.
 - [Citra-Standalone](https://github.com/Citra-Standalone/TSupport-Advance). TSupport-Advance.
 

@@ -247,8 +247,6 @@ if (typeof window.ksu === 'undefined') {
         root: 'KernelSU',
         root_sol: 'KernelSU',
         version: 'v1.7.3',
-        tee_status: 'normal',
-        tee_tier: 2,
         security_patch: '2026-04-05',
         build_patch: '2026-04-05',
         pif_model: 'Google Pixel 8 Pro XL Super Max Ultra Edition',

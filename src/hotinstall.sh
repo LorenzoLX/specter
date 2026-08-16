@@ -5,10 +5,6 @@ MODDIR=${0%/*}
 . "$MODDIR/lib/common.sh"
 export ROOT_SOL
 
-# Skip tee.sh's boot-time sleep — the system is already running.
-SPECTER_HOT_INSTALL=1
-export SPECTER_HOT_INSTALL
-
 HOT_LOG="$SPECTER_DIR/log/hotinstall.log"
 ensure_dir "$SPECTER_DIR/log" 2>/dev/null || true
 log_rotate "$HOT_LOG" 2>/dev/null || true
@@ -18,10 +14,6 @@ rm -f "$SPECTER_DIR/.hotinstall_failed"
 
 {
   log_i "HOT" "Hot-install live-apply starting"
-
-  # service.sh is skipped, so refresh TEE status here for the WebUI info.json.
-  log_i "HOT" "Refreshing TEE status"
-  sh "$MODDIR/features/tee.sh" || log_w "HOT" "tee.sh failed (TEE indicator may be stale until reboot)"
 
   # Kill the boot-time scheduler + its inotifyd children (pre-update code).
   if [ -f "$SPECTER_DIR/scheduler.pid" ]; then

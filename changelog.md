@@ -11,6 +11,7 @@
 **Changed**
 - Keystore management prefers TEESimulator over the Tricky Store family
 - Action pipeline security patch step defaults off
+- Removed the TEE check, TEE status display, and custom boot hash stack (attestation helper, vbmeta digest calc, custom boot hash UI) — keystore backends run their own TEE checks; declaring a status only confused users into thinking their device was broken
 - Singleton enforcement considers enabled modules only
 - Keystore contract: `KSM_CONFIG` + per-app mode capability; WebUI reads it instead of sniffing the format
 - Removed legacy locked.xml generation and the TEESimulator serial-lock path (no backend reads it anymore)

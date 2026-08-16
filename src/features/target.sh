@@ -47,7 +47,6 @@ MODULE_ROOT="${MODDIR%/features}"
 TEMP_PKGS="$MODULE_ROOT/pkgs.txt"
 _TMP_TARGET="$SPECTER_DIR/.target_new.$$"
 
-_read_tee_status
 _ensure_blacklist
 _parse_customize
 
