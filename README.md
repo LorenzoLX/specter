@@ -52,7 +52,7 @@ Specter is a complete rewrite of what I originally built as Yurikey.
 - **Module Configs**: HMA-OSS/HMA/HMAL, Zygisk Next
 - **Detection Cleanup**: removes detector logs, temp dirs, caches
 - **Widevine L1**: attestation keys via KmInstallKeybox
-- **Conflict Resolution**: 7 modules — aggressive disabled, passive coexists
+- **Conflict Resolution**: 8 modules — aggressive disabled, passive coexists, TEESimulator WebUI feature ownership
 - **Scheduler**: periodic keybox info, auto-target, autopif
 - **First-Boot**: backup originals, run full pipeline once
 

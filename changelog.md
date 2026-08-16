@@ -2,6 +2,8 @@
 
 **New**
 - JingMatrix TEESimulator 4.0 backend: profile config.json, patch/generation mode, operation mode dialog
+- TEESimulator WebUI ownership: per-feature conflict control — Specter keeps keybox install and live auto-target, defers security patch and operation mode to the TEESimulator WebUI (Control → Conflict Resolution to override)
+- Lossless config.json editing: preserves TEESimulator schema fields (`autoIncludeNewApps`), top-level fields, and `uid:`/`pkg@user` target tokens across Specter writes
 - Preferred PIF devices: choose Pixel Canary models or import custom props; preferred apply beats random fallback
 - OhMyKeymint: `auto`/`latest` security patch tokens, split keymint/injector restart tools
 - French + Indonesian translations (Turkish updated)

@@ -733,6 +733,14 @@ export async function openTargetAppsManager() {
       const modeItem = overlay.querySelector('#ta-mode') as HTMLElement | null;
       if (modeItem) {
         modeItem.hidden = ksmFormat === 'toml';
+        if (!modeItem.hidden && ksmFormat === 'json') {
+          try {
+            const { stdout } = await exec(`sh ${shellEscape(getModuleDir() + '/webroot/common/conflicts.sh')} status 2>/dev/null || echo '[]'`);
+            const entries = JSON.parse(stdout) as Array<{ key: string; prioritySpecter: boolean }>;
+            const te = entries.find(e => e.key === 'teesim');
+            if (te && !te.prioritySpecter) modeItem.hidden = true;
+          } catch {}
+        }
         const headline = modeItem.querySelector('[slot="headline"]');
         if (headline) {
           headline.textContent = ksmFormat === 'json'

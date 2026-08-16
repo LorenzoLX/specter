@@ -44,6 +44,7 @@ export const FEATURE_I18N_KEYS: Record<string, string> = {
   security_patch: 'control_toggle_action_security_patch',
   target: 'control_toggle_action_target',
   boot_hash: 'prop_handler_boot_hash',
+  teesim_mode: 'ta_teesim_mode_title',
 };
 
 export function defaultSecurityPatch(): string {
