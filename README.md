@@ -117,6 +117,11 @@ To contribute translations:
 - **Preferred**: Join the [Crowdin project](https://crowdin.com/project/specter) — web UI, no git needed
 - **Alternative**: Edit the JSON files in `src/webroot/lang/` and submit a PR
 
+Automation:
+- Pushing changes to `src/webroot/lang/source/string.json` on `main` uploads the new keys to Crowdin
+- Every Monday a workflow downloads finished translations and opens a PR (`i18n: translation updates from Crowdin`)
+- Required repo secrets: `CROWDIN_PROJECT_ID`, `CROWDIN_PERSONAL_TOKEN`
+
 Each `*.json` file is validated against `source/string.json` in CI (`npm test`). New keys without translations fall back to English.
 
 ## Thanks
