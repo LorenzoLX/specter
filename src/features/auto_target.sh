@@ -10,6 +10,8 @@ BLACKLIST="$SPECTER_DIR/blacklist.txt"
 BLACKLIST_ENABLED="$SPECTER_DIR/blacklist_enabled"
 KNOWN_PKGS="$SPECTER_DIR/auto_known_packages.txt"
 TEMP_LIST="$SPECTER_DIR/auto_scan_tmp.txt"
+rm -f "$SPECTER_DIR"/.auto_target_*.*
+trap 'rm -f "$TEMP_LIST" "$SPECTER_DIR/.auto_target_existing.$$" "$SPECTER_DIR/.auto_target_staging.$$" "$SPECTER_DIR/.auto_target_adds.$$" "$SPECTER_DIR/.auto_target_clean.$$" "$SPECTER_DIR/.auto_target_seen.$$"' EXIT
 
 _feature_should_run "target" || { log_d "AUTO_TARGET" "target disabled or claimed, skipping"; exit 0; }
 
@@ -114,6 +116,5 @@ ksm_commit_targets "$_TMP_CLEAN"
 unset _installed_list _bl_set _cleaned _fixed _keep _base
 
 cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
-rm -f "$TEMP_LIST" "$_EXISTING" "$_STAGING" "$_SEEN" "$_TMP_CLEAN" "$_ADDS"
 log_i "AUTO_TARGET" "Auto-target scan complete"
 exit 0
