@@ -173,11 +173,12 @@ ksm_read_targets_raw() {
 
 ksm_lock_targets() {
   mkdir -p "$SPECTER_DIR/.lock" || return 1
-  exec 9>"$SPECTER_DIR/.lock/targets" || return 1
-  flock 9 2>/dev/null && return 0
-  busybox flock 9 2>/dev/null && return 0
-  log_w "KSM" "flock unavailable, target writes are unserialized"
-  return 0
+  _klt="$SPECTER_DIR/.lock/targets"
+  while ! ln -s "$$" "$_klt" 2>/dev/null; do
+    _klt_pid=$(readlink "$_klt" 2>/dev/null || true)
+    [ -n "$_klt_pid" ] && [ -d "/proc/$_klt_pid" ] && { sleep 3; continue; }
+    rm -rf "$_klt"
+  done
 }
 
 ksm_commit_targets() {
