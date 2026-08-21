@@ -171,6 +171,15 @@ ksm_read_targets_raw() {
   esac
 }
 
+ksm_lock_targets() {
+  mkdir -p "$SPECTER_DIR/.lock" || return 1
+  exec 9>"$SPECTER_DIR/.lock/targets" || return 1
+  flock 9 2>/dev/null && return 0
+  busybox flock 9 2>/dev/null && return 0
+  log_w "KSM" "flock unavailable, target writes are unserialized"
+  return 0
+}
+
 ksm_commit_targets() {
   _kct_src="$1"
   case "$KSM_FORMAT" in

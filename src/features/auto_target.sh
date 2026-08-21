@@ -9,8 +9,7 @@ detect_keystore_manager
 BLACKLIST="$SPECTER_DIR/blacklist.txt"
 BLACKLIST_ENABLED="$SPECTER_DIR/blacklist_enabled"
 KNOWN_PKGS="$SPECTER_DIR/auto_known_packages.txt"
-TEMP_LIST="$SPECTER_DIR/auto_scan_tmp.txt"
-rm -f "$SPECTER_DIR"/.auto_target_*.*
+TEMP_LIST="$SPECTER_DIR/.auto_target_scan.$$"
 trap 'rm -f "$TEMP_LIST" "$SPECTER_DIR/.auto_target_existing.$$" "$SPECTER_DIR/.auto_target_staging.$$" "$SPECTER_DIR/.auto_target_adds.$$" "$SPECTER_DIR/.auto_target_clean.$$" "$SPECTER_DIR/.auto_target_seen.$$"' EXIT
 
 _feature_should_run "target" || { log_d "AUTO_TARGET" "target disabled or claimed, skipping"; exit 0; }
@@ -23,6 +22,8 @@ ksm_available || { log_d "AUTO_TARGET" "no keystore manager, skipping"; exit 0; 
 pkgs=$(pm list packages -3 2>/dev/null) || { log_e "AUTO_TARGET" "pm list packages failed"; exit 1; }
 echo "$pkgs" | cut -d ":" -f 2 | sort -u > "$TEMP_LIST"
 [ ! -s "$TEMP_LIST" ] && { rm -f "$TEMP_LIST"; exit 0; }
+
+ksm_lock_targets || { log_e "AUTO_TARGET" "failed to lock target list"; exit 1; }
 
 _EXISTING="$SPECTER_DIR/.auto_target_existing.$$"
 ksm_read_targets > "$_EXISTING" 2>/dev/null || : > "$_EXISTING"
@@ -72,8 +73,6 @@ EOF
   log_i "AUTO_TARGET" "Added $_added new package(s)"
 fi
 
-# Cleanup: remove entries for uninstalled or blacklisted packages
-_installed_list=$(pm list packages -3 2>/dev/null | cut -d: -f2 | sort -u)
 _bl_set=""
 [ -f "$BLACKLIST_ENABLED" ] && [ -s "$BLACKLIST" ] && _bl_set=$(cat "$BLACKLIST")
 _TMP_CLEAN="$SPECTER_DIR/.auto_target_clean.$$"
@@ -98,7 +97,7 @@ while IFS= read -r _line || [ -n "$_line" ]; do
     [ "$_base" = "$_fixed" ] && { _keep=true; break; }
   done
   if [ "$_keep" = "true" ]; then echo "$_line" >> "$_TMP_CLEAN"; continue; fi
-  if echo "$_installed_list" | grep -Fxq "$_base" 2>/dev/null; then
+  if grep -Fxq "$_base" "$TEMP_LIST" 2>/dev/null; then
     if [ -n "$_bl_set" ] && echo "$_bl_set" | grep -Fxq "$_base" 2>/dev/null; then
       _cleaned=$((_cleaned + 1))
       continue
@@ -113,7 +112,7 @@ _txt_insert_default "$_TMP_CLEAN" "$_ADDS"
 ksm_commit_targets "$_TMP_CLEAN"
 [ "$_cleaned" -gt 0 ] && log_i "AUTO_TARGET" "Removed $_cleaned stale/blacklisted entry(s)"
 
-unset _installed_list _bl_set _cleaned _fixed _keep _base
+unset _bl_set _cleaned _fixed _keep _base
 
 cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
 log_i "AUTO_TARGET" "Auto-target scan complete"
