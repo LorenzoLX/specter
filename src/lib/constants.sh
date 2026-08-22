@@ -64,6 +64,7 @@ cfg_set() {
   printf '%s' "$2" > "$CONFIG_DIR/val/$1.val"
 }
 
+# gms_clear_data:0 — pm clear wipes Play purchase/login (biometric prompt on next open).
 SPECTER_TOGGLE_DEFAULTS="
 toggle_prop_handler:1 toggle_boot_state_props:1 toggle_bootmode_spoof:1
 toggle_adb_disabler:0
@@ -77,7 +78,7 @@ toggle_action_gms:1 toggle_action_target:1
 toggle_action_security_patch:0 toggle_action_pif:1 toggle_action_keybox:1
 toggle_action_security_patch_device:1 toggle_action_security_patch_bulletin:1
 toggle_action_security_patch_synthetic:1
-toggle_action_gms_force_stop:1 toggle_action_gms_clear_data:1
+toggle_action_gms_force_stop:1 toggle_action_gms_clear_data:0
 toggle_auto_target:1 toggle_keybox_info:1 toggle_autopif:0 toggle_autokeybox:0
 "
 
