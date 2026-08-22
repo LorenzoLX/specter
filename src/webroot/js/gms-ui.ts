@@ -1,6 +1,7 @@
 import { cfgGet, cfgSet } from './cfg.js';
 import { showToast } from './toast.js';
 import { getTranslation } from './i18n.js';
+import { wireRowDialog } from './toggles.js';
 
 const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
 
@@ -81,10 +82,5 @@ export function openGmsDialog() {
 }
 
 export function wireGms() {
-  const row = document.getElementById('toggle-action_gms-row');
-  if (!row) return;
-  const content = row.querySelector('.list-item-content') as HTMLElement | null;
-  if (!content) return;
-  content.style.cursor = 'pointer';
-  content.addEventListener('click', openGmsDialog);
+  wireRowDialog('toggle-action_gms-row', openGmsDialog);
 }
