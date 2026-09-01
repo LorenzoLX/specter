@@ -29,8 +29,6 @@ echo "$_all" | cut -d ":" -f 2 | sort -u > "$_INSTALLED"
 [ -s "$_INSTALLED" ] || cp "$TEMP_LIST" "$_INSTALLED"
 unset _all
 
-ksm_lock_targets || { log_e "AUTO_TARGET" "failed to lock target list"; exit 1; }
-
 _EXISTING="$SPECTER_DIR/.auto_target_existing.$$"
 ksm_read_targets > "$_EXISTING" 2>/dev/null || : > "$_EXISTING"
 
@@ -115,6 +113,7 @@ while IFS= read -r _line || [ -n "$_line" ]; do
 done < "$_STAGING"
 
 _txt_insert_default "$_TMP_CLEAN" "$_ADDS"
+ksm_lock_targets || { log_e "AUTO_TARGET" "failed to lock target list"; exit 1; }
 ksm_commit_targets "$_TMP_CLEAN"
 [ "$_cleaned" -gt 0 ] && log_i "AUTO_TARGET" "Removed $_cleaned stale/blacklisted entry(s)"
 
