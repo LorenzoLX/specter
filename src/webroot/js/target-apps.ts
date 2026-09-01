@@ -429,13 +429,35 @@ export async function openTargetAppsManager() {
       apps.sort((a, b) => a.packageName.localeCompare(b.packageName));
       headline.textContent = t('ta_hide_system', 'Hide system apps');
     } else {
-      const sysSet = new Set(sysPkgs);
-      apps = apps.filter(a => !sysSet.has(a.packageName));
       headline.textContent = t('ta_show_system', 'Show system apps');
     }
     applyFilters();
     closeTapMenu();
   });
+
+  function ingestTargetList(raw: string) {
+    targetMap.clear();
+    for (const line of raw.split('\n').map(s => s.trim()).filter(Boolean)) {
+      if (supportsPerAppMode && line.endsWith('!')) targetMap.set(line.slice(0, -1), 'force');
+      else if (supportsPerAppMode && line.endsWith('?')) targetMap.set(line.slice(0, -1), 'conditional');
+      else targetMap.set(line.replace(/[!?]$/, ''), 'bare');
+    }
+  }
+
+  async function replaceApps(pkgs: string[]) {
+    const have = new Set(pkgs);
+    const extra = [...targetMap.keys()].filter(p => !have.has(p));
+    const all = pkgs.concat(extra);
+    const labelMap = await resolvePackageNames(all);
+    apps.length = 0;
+    for (const pkg of all) {
+      apps.push({
+        packageName: pkg,
+        appName: labelMap.get(pkg) || pkg,
+        state: targetMap.get(pkg) || 'unchecked',
+      });
+    }
+  }
 
   async function loadData() {
     try {
@@ -481,21 +503,8 @@ export async function openTargetAppsManager() {
         fetchUserPackages(),
       ]);
 
-      const targetLines = targetResult.split('\n').map(s => s.trim()).filter(Boolean);
-      targetMap.clear();
-      for (const line of targetLines) {
-        if (supportsPerAppMode && line.endsWith('!')) targetMap.set(line.slice(0, -1), 'force');
-        else if (supportsPerAppMode && line.endsWith('?')) targetMap.set(line.slice(0, -1), 'conditional');
-        else targetMap.set(line.replace(/[!?]$/, ''), 'bare');
-      }
-
-      const labelMap = await resolvePackageNames(pkgs);
-
-      apps = pkgs.map(pkg => ({
-        packageName: pkg,
-        appName: labelMap.get(pkg) || pkg,
-        state: targetMap.get(pkg) || 'unchecked',
-      }));
+      ingestTargetList(targetResult);
+      await replaceApps(pkgs);
 
       appendToOutput(`[TARGET] Loaded ${apps.length} user apps, ${targetMap.size} in target list`);
       loading.style.display = 'none';
@@ -515,21 +524,8 @@ export async function openTargetAppsManager() {
         fetchUserPackages(),
       ]);
 
-      const targetLines = targetResult.split('\n').map(s => s.trim()).filter(Boolean);
-      targetMap.clear();
-      for (const line of targetLines) {
-        if (line.endsWith('!')) targetMap.set(line.slice(0, -1), 'force');
-        else if (line.endsWith('?')) targetMap.set(line.slice(0, -1), 'conditional');
-        else targetMap.set(line, 'bare');
-      }
-
-      const labelMap = await resolvePackageNames(pkgs);
-
-      apps = pkgs.map(pkg => ({
-        packageName: pkg,
-        appName: labelMap.get(pkg) || pkg,
-        state: targetMap.get(pkg) || 'unchecked',
-      }));
+      ingestTargetList(targetResult);
+      await replaceApps(pkgs);
 
       appendToOutput(`[TARGET] Refreshed ${apps.length} user apps, ${targetMap.size} in target.txt`);
       applyFilters();
@@ -779,6 +775,11 @@ export async function openTargetAppsManager() {
       result = result.filter(a =>
         a.packageName.toLowerCase().includes(q) || a.appName.toLowerCase().includes(q)
       );
+    }
+
+    if (!showSystemApps && sysPkgs.length) {
+      const sysSet = new Set(sysPkgs);
+      result = result.filter(a => !sysSet.has(a.packageName) || a.state !== 'unchecked');
     }
 
     if (currentFilter === 'selected') {
