@@ -65,6 +65,7 @@ async function readTargetList(): Promise<string> {
 }
 
 async function writeTargetList(content: string): Promise<void> {
+  if (content && !content.endsWith('\n')) content += '\n';
   const staging = `${specterDir()}/.target_staging`;
   const encoded = await exec(`printf '%s' ${shellEscape(content)} | base64 -w0`);
   const written = await exec(
